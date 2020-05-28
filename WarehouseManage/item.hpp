@@ -1,7 +1,6 @@
 #pragma once
-#include <string>
+#include "pch.hpp"
 
-typedef std::string id_type;
 class item
 {
 public:
@@ -11,9 +10,6 @@ public:
 	item(const id_type& id) :
 		item_id(id)
 	{}
-	item(id_type&& id) :
-		item_id(id)
-	{}
 	item(const item& oth) 
 	{
 		if (this != &oth)
@@ -21,10 +17,7 @@ public:
 			item_id = oth.item_id;
 		}
 	}
-	inline item(item&& oth) noexcept :
-		item_id(std::move(oth.item_id))
-	{}
-
+	
 	// Operator=
 	item& operator=(const item& oth)
 	{

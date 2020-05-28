@@ -8,11 +8,9 @@
 //观察者模式
 //备忘录模式
 
-typedef std::tuple<unsigned, location_type> item_info;
-typedef std::tuple<id_type, unsigned> slot_info;
 
-#define COMPILE 0
-#if COMPILE
+#define COMPILE_MANAGER 0
+#if COMPILE_MANAGER
 
 class order
 {

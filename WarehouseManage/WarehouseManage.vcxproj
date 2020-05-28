@@ -142,13 +142,17 @@
   <ItemGroup>
     <ClInclude Include="item.hpp" />
     <ClInclude Include="item_database.hpp" />
+    <ClInclude Include="pch.hpp" />
     <ClInclude Include="test.hpp" />
     <ClInclude Include="warehouse_manager.hpp" />
     <ClInclude Include="warehouse.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="item.cpp" />
+    <ClCompile Include="item_database.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="test.cpp" />
+    <ClCompile Include="warehouse.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
