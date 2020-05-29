@@ -124,6 +124,10 @@ void test_warehouse()
 	test_warehouse_locate_item(warehouse_, vi);
 
 	// Test get_item
+	test_warehouse_get_item(warehouse_, vi);
+
+	// Test update_stock
+	test_warehouse_update_stock(warehouse_, vi);
 }
 
 void test_warehouse_locate_item(warehouse& warehouse_, const std::vector<item_t>& vi)
@@ -164,5 +168,90 @@ void test_warehouse_locate_item(warehouse& warehouse_, const std::vector<item_t>
 	else
 	{
 		std::cout << "warehouse::locate_item test: fail\n";
+	}
+}
+
+void test_warehouse_get_item(warehouse& warehouse_, const std::vector<item_t>& vi)
+{
+	bool error = false;
+	for (auto& i : vi)
+	{
+		// Extract infos
+		auto& item_id = std::get<id_type>(i);
+		auto& location = std::get<location_type>(i);
+
+		// Run
+		auto result = warehouse_.get_item(location);
+
+		// Extract result
+		auto success = std::get<bool>(result);
+		auto& item_id_actual = std::get<id_type>(result);
+
+		// Assertion
+		if (success && item_id == item_id_actual)
+		{
+			continue;
+		}
+
+		// Print error if occurs
+		error = true;
+		std::cout << "Error: "
+			<< "location: " << location_to_string(location)
+			<< " expect item: " << item_id
+			<< ", actual item: " << item_id_actual
+			<< "\n";
+	}
+
+	if (!error)
+	{
+		std::cout << "warehouse::get_item test: pass\n";
+	}
+	else
+	{
+		std::cout << "warehouse::get_item test: fail\n";
+	}
+}
+
+void test_warehouse_update_stock(warehouse& warehouse_, const std::vector<item_t>& vi)
+{
+	bool error = false;
+	for (auto& i : vi)
+	{
+		// Extract infos
+		auto& item_id = std::get<id_type>(i);	
+		auto prev_stock = std::get<unsigned>(i);
+
+		// Run
+		randomGenerator randomer;
+		auto updated_stock = randomer.get_uniform(0, prev_stock * 2);
+		auto result = warehouse_.update_stock(item_id, updated_stock);
+
+		// Extract result
+		auto success = std::get<bool>(result);
+		auto differ_actual = std::get<int>(result);
+		auto differ_expected = updated_stock - prev_stock;
+
+		// Assertion
+		if (success && differ_actual == differ_expected)
+		{
+			continue;
+		}
+		
+		// Print error if occurs
+		error = true;
+		std::cout << "Error: "
+			<< "item " << item_id
+			<< " latest stock: " << updated_stock
+			<< ", actual stock " << prev_stock + differ_actual
+			<< "\n";
+	}
+
+	if (!error)
+	{
+		std::cout << "warehouse::update_stock test: pass\n";
+	}
+	else
+	{
+		std::cout << "warehouse::update_stock test: fail\n";
 	}
 }

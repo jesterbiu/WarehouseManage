@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <iostream>
 
+
 // Type aliases
 typedef std::string id_type; // ID type of item and shelf
 typedef unsigned index_type; // Index for slot of a shelf

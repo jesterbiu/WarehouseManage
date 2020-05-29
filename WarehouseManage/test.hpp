@@ -2,7 +2,7 @@
 // THE FOLLOWING CODES ARE THE TEST FOR THE PROJECT
 
 #pragma once
-
+#include "randomgenerator.hpp"
 #include "warehouse_manager.hpp"
 
 
@@ -22,3 +22,7 @@ void test_item_database_get_item(item_database& database, const std::vector<id_t
 void test_warehouse();
 
 void test_warehouse_locate_item(warehouse& warehouse_, const std::vector<item_t>& vi);
+
+void test_warehouse_get_item(warehouse& warehouse_, const std::vector<item_t>& vi);
+
+void test_warehouse_update_stock(warehouse& warehouse_, const std::vector<item_t>& vi);

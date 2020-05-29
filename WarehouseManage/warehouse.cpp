@@ -31,16 +31,13 @@ void warehouse::load_warehouse(const std::vector<item_t>& items)
 		auto& location = std::get<location_type>(i);
 		auto& shelf_id = std::get<id_type>(location);
 		auto slot = std::get<index_type>(location);
-		std::cout << item_id << " "
-			<< count << " "
-			<< shelf_id << slot
-			<< "\n";
+		
 		// Load shelves
 		try 
 		{
 			auto& shelf_ = shelves.at(shelf_id);
-			(*shelf_)[slot - 1].item_id = item_id;
-			(*shelf_)[slot - 1].stock_counts = count;
+			(*shelf_)[slot].item_id = item_id;
+			(*shelf_)[slot].stock_counts = count;
 
 			// Load location_by_itemid;
 			auto location = std::make_tuple(shelf_id, slot);
@@ -98,11 +95,49 @@ std::tuple<bool, id_type> warehouse::get_item(const location_type& location)
 		? true
 		: false;
 	auto item_id = exists
-		? it->second->slots[slot_index - 1].item_id
+		? (*it->second)[slot_index].item_id
 		: std::string{ "" };
 
 	// Return the result
 	return std::make_tuple(exists, item_id);
+}
+
+std::tuple<bool, int> warehouse::update_stock(const id_type& item_id, unsigned update)
+{
+	// Extract item info
+	auto locate = locate_item(item_id);
+	bool exists = std::get<0>(locate);
+	auto location = std::get<1>(locate);
+
+	// Return if the item doesn't exist
+	if (!exists)
+	{
+		return std::make_tuple(false, 0);
+	}
+
+	// Update the item's stock	
+	auto shelf_id = std::get<0>(location);
+	auto slot_index = std::get<1>(location);
+	int difference = 0;
+	try
+	{
+		// Fetch stock info
+		auto& shelf_ptr = shelves.at(shelf_id);
+		unsigned& stock = (*shelf_ptr)[slot_index].stock_counts;
+		unsigned prev_stock = stock;
+
+		// Update stock
+		stock = update;
+
+		// Calculate difference
+		difference = stock - prev_stock;
+	}
+	catch (std::exception& e)
+	{
+		std::cout << e.what();
+	}
+	
+	return std::make_tuple(exists, difference);
 }
 
 // Relocate an existing item to another location.
@@ -117,9 +152,6 @@ std::tuple<bool, id_type> warehouse::get_item(const location_type& location)
 // Return ture if succeed.
 //bool remove_item(const id_type&);
 
-// Update the item's stock given by its id 
-// Return true if the item exists and the new count of stock is different.
-//bool update_stock(const id_type&, unsigned);
 
 const location_type warehouse::nowhere
 	= std::make_tuple(std::string{ "" }, 0);

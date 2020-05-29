@@ -2,15 +2,12 @@
 
 #include "item_database.hpp"
 
-
-
 #define COMPILE_WAREHOUSE 1
-
 #if COMPILE_WAREHOUSE
 
-//-------
-// slot |
-//-------
+//----------------//
+//      slot      //
+//----------------//
 class slot
 {
 public:		
@@ -19,9 +16,9 @@ public:
 };
 
 
-//--------
-// shelf |
-//--------
+//----------------//
+//      shelf     //
+//----------------//
 class shelf
 {
 public:
@@ -35,24 +32,27 @@ public:
 		initialize_slots();
 	}
 
-	slot& operator[](size_t index)
+	// Return slot using 1-based index
+	slot& operator[](index_type slot_index)
 	{
-		return slots[index];
+		return slots[slot_index - 1];
 	}
 		
 	id_type shelf_id;
-	std::vector<slot> slots;
+	
 
 	// Indexes of slots
 	const static std::string slot_indexes[];
 private:	
 	// Initialize slots with pre-defined slot IDs
 	void initialize_slots();
+	std::vector<slot> slots;
 };
 typedef std::unique_ptr<shelf> shelf_uptr;// shelf smart pointer
-//------------
-// warehouse |
-//------------
+
+//---------------------//
+//      warehouse      //
+//---------------------//
 class warehouse
 {
 public:
@@ -74,6 +74,12 @@ public:
 	// Return: tuple<true, valid item id> if succeed
 	std::tuple<bool, id_type> get_item(const location_type&);
 
+	// Update the item's stock given by its id 
+	// Return:
+	//	<0> true if the item exists
+	//	<1> the difference between pre-update and updated stock count
+	std::tuple<bool, int> update_stock(const id_type&, unsigned);
+
 #if FALSE
 	// Relocate an existing item to another location.
 	// Return true if succeed.
@@ -87,9 +93,6 @@ public:
 	// Return ture if succeed.
 	bool remove_item(const id_type&);
 
-	// Update the item's stock given by its id 
-	// Return true if the item exists and the new count of stock is different.
-	bool update_stock(const id_type&, unsigned);
 #endif
 
 	// Location error indicator

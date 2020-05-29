@@ -143,7 +143,9 @@
     <ClInclude Include="item.hpp" />
     <ClInclude Include="item_database.hpp" />
     <ClInclude Include="pch.hpp" />
+    <ClInclude Include="randomgenerator.hpp" />
     <ClInclude Include="test.hpp" />
+    <ClInclude Include="uncopiable.hpp" />
     <ClInclude Include="warehouse_manager.hpp" />
     <ClInclude Include="warehouse.hpp" />
   </ItemGroup>
@@ -151,6 +153,7 @@
     <ClCompile Include="item_database.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="randomGenerator.cpp" />
     <ClCompile Include="test.cpp" />
     <ClCompile Include="warehouse.cpp" />
   </ItemGroup>
