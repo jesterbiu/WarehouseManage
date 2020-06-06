@@ -152,7 +152,8 @@
     <ClCompile Include="SQLiteTest.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="data.hpp" />
+    <ClInclude Include="error.hpp" />
+    <ClInclude Include="item.hpp" />
     <ClInclude Include="manage.hpp" />
     <ClInclude Include="sqlite3.h" />
   </ItemGroup>
