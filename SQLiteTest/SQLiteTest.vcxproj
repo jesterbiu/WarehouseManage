@@ -148,14 +148,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="database.cpp" />
+    <ClCompile Include="manage.cpp" />
+    <ClCompile Include="manage_test.cpp" />
     <ClCompile Include="sqlite3.c" />
-    <ClCompile Include="SQLiteTest.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="storage.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="database.hpp" />
     <ClInclude Include="error.hpp" />
     <ClInclude Include="item.hpp" />
     <ClInclude Include="manage.hpp" />
+    <ClInclude Include="manage_test.hpp" />
     <ClInclude Include="sqlite3.h" />
+    <ClInclude Include="storage.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
