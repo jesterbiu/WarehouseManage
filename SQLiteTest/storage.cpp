@@ -1,5 +1,7 @@
 #include "storage.hpp"
 
+
+namespace warehouse {
 // Utility function
 // Split a string by the spliter given and return all fractions
 std::vector<std::string> split(const std::string& str, char spliter)
@@ -101,4 +103,5 @@ Item storage::extract_item(const std::vector<std::string>& vi, Item_File_Type fi
 	// If filetype or count of fields not matched 
 	// return an invalid item
 	return Item();
+}
 }

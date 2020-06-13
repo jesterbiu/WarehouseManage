@@ -1,6 +1,6 @@
 #include <iostream>
-#include "manage.hpp"
 #include "manage_test.hpp"
+using namespace warehouse;
 void print_item(const Item& i)
 {
     if (auto l = i.location)

@@ -3,38 +3,58 @@
 #include <utility>
 #include <cmath>
 #include <cstring>
+#include <map>
+#include <vector>
 #include "error.hpp"
 #include "database.hpp"
 #include "item.hpp"
 
-class manage
+namespace warehouse
+{
+class item_manager
 {	
+private:
+	// Database instance handle
+	database* db;
 public:
-	manage(database* pdb) :
-		db(pdb) {}
-	manage(const manage& oth) :
-		db(oth.db) {}
-	manage& operator =(const manage& oth)
+	// No default ctor
+	// Param ctor
+	item_manager(database* pdb) :
+		db(pdb)
+	{
+		initialize_locations_avail();
+	}
+	// Copy ctor
+	item_manager(const item_manager& oth) :
+		db(oth.db), locations_avail(oth.locations_avail) {}
+	// Copy-assignment ctor
+	item_manager& operator =(const item_manager& oth)
 	{
 		if (this != &oth)
 		{
 			db = oth.db;
+			locations_avail = oth.locations_avail;
 		}
 		return *this;
 	}
 
+	// Add a unique item to the database. Return true if success
 	bool add_item(const Item& item);
 
+	// Check if the item of given id exists. Return true if exists
 	inline bool exist(const std::string& id)
 	{
 		auto result = query_by_id(id);
 		return result.first;
 	}
 
+	// Find and return the item if exists. Test pair.first to validate the return
 	std::pair<bool, Item> find_item(const std::string& id);
 	
+	// Check the location and return the item at the location if there is one.
 	std::pair<bool, Item> check_location(const Location& location);
 
+	// Update an item's stocks to currstock given its id
 	bool update_stocks(const std::string& id, int currstock);
 
 private:		
@@ -62,6 +82,7 @@ private:
 		return statement_handle{ sqlstmt, **db };
 	}
 
+	// Return a statement_handle which uodate stocks by id
 	inline statement_handle update_stocks_stmt()
 	{
 		static auto sqlstmt =
@@ -81,7 +102,32 @@ private:
 	// Query by item id
 	std::pair<bool, statement_handle> query_by_id(const std::string& id);
 
-	// Field
-	database* db;	
+	// Val = true if the location is available for storing an item
+	std::map<Location, bool> locations_avail;
+	const bool Available = true;
+	const bool Unavailable = false;
+	
+	// Return a vector contains all locations inserted
+	std::vector<Location> get_unavail_locations();	
+	
+	// Initialize locations_avail during instantiation based on the database instance
+	void initialize_locations_avail();
+
+	// Check if the given locations is available, 
+	// exception out_of_range is thrown if the location doesn't exists
+	inline bool is_available(const Location& loc)
+	{
+		return locations_avail.at(loc);
+	}
+	
+	inline void occupy_location(const Location& loc)
+	{
+		locations_avail.at(loc) = Unavailable;
+	}
+
+	// Return an available location.
+	// The order of assignment of locations is unspecified.
+	Location arrange_location();
 };
+}
 

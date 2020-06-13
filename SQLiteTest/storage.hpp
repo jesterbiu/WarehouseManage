@@ -4,6 +4,9 @@
 #include "error.hpp"
 #include "item.hpp"
 
+namespace warehouse
+{
+
 // Located indicates that the table contains location of the item, NotLocated means not
 enum class Item_File_Type { Located = 4, NotLocated = 2 };
 
@@ -21,3 +24,5 @@ private:
 	static Item extract_item(const std::vector<std::string>& vi, Item_File_Type filetype);
 
 };
+
+}

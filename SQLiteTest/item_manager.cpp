@@ -1,8 +1,11 @@
-#include "manage.hpp"
-
-//manage::
-bool manage::add_item(const Item& item)
+#include "item_manager.hpp"
+using namespace warehouse;
+//item_manager::
+bool item_manager::add_item(const Item& pitem)
 {
+	// Validate input item
+	if (!pitem) return false;
+
 	// Prepare statement
 	auto stmthandle = insert_stmt();
 	if (!stmthandle)
@@ -10,16 +13,41 @@ bool manage::add_item(const Item& item)
 		return false;
 	}
 
-	// Bind				
+	// Get a copy in case location allocation happens
+	auto item = Item(pitem); 
+
+	// Check item location
+	if (item.location) // Check pre-assigned location
+	{		
+		// Return false if the item's location is already unavailable
+		if (!is_available(item.location))
+		{
+			return false;
+		}
+	}
+	else // Allocate a location for item that didn't
+	{
+		// Return false if no location available 
+		if (!(item.location = arrange_location()))
+		{
+			return false;
+		}		
+	}
+
+	// Bind SQL params
 	bind_insert(item, *stmthandle);
 
-	// Execute
-	return SQLITE_DONE == step(*stmthandle)
-		? true
-		: false;
+	// Execute insertion
+	if (SQLITE_DONE == step(*stmthandle))
+	{		
+		occupy_location(item.location);
+		return true;
+	}
+	
+	return false;
 }
 
-std::pair<bool, Item> manage::find_item(const std::string& id)
+std::pair<bool, Item> item_manager::find_item(const std::string& id)
 {
 	// Check existence
 	auto result = query_by_id(id);
@@ -36,8 +64,14 @@ std::pair<bool, Item> manage::find_item(const std::string& id)
 	return std::make_pair(true, d);
 }
 
-std::pair<bool, Item> manage::check_location(const Location& location)
+std::pair<bool, Item> item_manager::check_location(const Location& location)
 {
+	// Validate input
+	if (!location)
+	{
+		return std::make_pair(false, Item());
+	};
+
 	// Prepare statement
 	auto stmthandle = location_query_stmt();
 	if (!stmthandle)
@@ -73,7 +107,7 @@ std::pair<bool, Item> manage::check_location(const Location& location)
 
 }
 
-void manage::extract_query(Item& d, sqlite3_stmt* stmthandle)
+void item_manager::extract_query(Item& d, sqlite3_stmt* stmthandle)
 {
 	// Location
 	d.location = Location
@@ -91,7 +125,7 @@ void manage::extract_query(Item& d, sqlite3_stmt* stmthandle)
 	d.stocks = sqlite3_column_int(stmthandle, 3);
 }
 
-void manage::bind_insert(const Item& d, sqlite3_stmt* stmthandle)
+void item_manager::bind_insert(const Item& d, sqlite3_stmt* stmthandle)
 {
 	// Bind location
 	auto rc1 = sqlite3_bind_int(stmthandle, 1, d.location.shelf);
@@ -121,9 +155,10 @@ void manage::bind_insert(const Item& d, sqlite3_stmt* stmthandle)
 
 }
 
-int manage::step(sqlite3_stmt* stmthandle)
+int item_manager::step(sqlite3_stmt* stmthandle)
 {
 	auto rc = sqlite3_step(stmthandle);
+	
 	// Error
 	if (rc != SQLITE_DONE && rc != SQLITE_ROW)
 	{
@@ -142,7 +177,7 @@ int manage::step(sqlite3_stmt* stmthandle)
 	return rc;
 }
 
-std::pair<bool, statement_handle> manage::query_by_id(const std::string& id)
+std::pair<bool, statement_handle> item_manager::query_by_id(const std::string& id)
 {
 	// Prepare statement
 	auto stmthandle = id_query_stmt();
@@ -176,7 +211,7 @@ std::pair<bool, statement_handle> manage::query_by_id(const std::string& id)
 	}
 }
 
-bool manage::update_stocks(const std::string& id, int updated_stocks)
+bool item_manager::update_stocks(const std::string& id, int updated_stocks)
 {
 	// Prepare statement
 	auto stmthandle = update_stocks_stmt();
@@ -209,4 +244,97 @@ bool manage::update_stocks(const std::string& id, int updated_stocks)
 	{
 		return true;
 	}
+}
+
+int extract_locs_callback(
+	void* vl,	// vector to store locations the query returns
+	int col_count,				// the number of cloumns in the result
+	char** col_values,			// value of each column
+	char** col_names			// name of each column
+	)
+{
+	// Extract a location
+	if (vl && col_count == 2)
+	{
+		// get shelf
+		char shelf = col_values[0][0];
+
+		// get slot
+		auto slot_str = std::string{ col_values[1] };
+		int slot = std::stoi(slot_str);
+
+		// record
+		auto loc = Location{ shelf, slot };
+		((std::vector<Location>*)vl)->push_back(loc);
+		
+		return 0;
+	}
+
+	return -1;	
+}
+
+std::vector<Location> item_manager::get_unavail_locations()
+{
+	// Vector to store locations
+	std::vector<Location> locs;
+
+	// Execute query and extract results
+	static auto sqlstmt =
+		"SELECT shelf, slot FROM items";
+	char* errmsg = NULL;
+	auto rc = sqlite3_exec(**db, sqlstmt, extract_locs_callback, &locs, &errmsg);
+
+	// Validate execution
+	if (rc != SQLITE_OK)
+	{
+		// throw
+		std::cout << "get_unavail_locations failed:";
+		if (errmsg)
+		{
+			std::cout << errmsg;
+		}
+		std::cout << std::endl;
+		throw warehouse_except(errmsg, rc);
+	}
+	
+	return locs;
+}
+
+void item_manager::initialize_locations_avail()
+{
+	// shelf and slot designs
+	static const char shelves[] = { 'A', 'B', 'C', 'D' };
+	static const int slot_count = 12;
+
+	// Initialize all locations as available
+	for (auto s : shelves)						// ['A', 'D']
+	{
+		for (int i = 1; i <= slot_count; i++)	// [1, 12]
+		{
+			auto loc = Location{ s, i };
+			locations_avail.insert({ loc, Available });
+		}
+	}
+
+	// Modify locations that are not available
+	auto vl = get_unavail_locations();
+	for (auto& l : vl)
+	{
+		locations_avail[l] = Unavailable;
+	}
+}
+
+Location item_manager::arrange_location()
+{
+	// Traverse and return the first available location
+	for (const auto& i : locations_avail)
+	{
+		if (i.second == Available)
+		{
+			return i.first;
+		}
+	}
+
+	// Return an invalid location if no available location found
+	return Location();
 }

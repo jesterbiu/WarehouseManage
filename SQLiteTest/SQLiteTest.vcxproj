@@ -149,7 +149,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="database.cpp" />
-    <ClCompile Include="manage.cpp" />
+    <ClCompile Include="item_manager.cpp" />
     <ClCompile Include="manage_test.cpp" />
     <ClCompile Include="sqlite3.c" />
     <ClCompile Include="main.cpp" />
@@ -159,7 +159,7 @@
     <ClInclude Include="database.hpp" />
     <ClInclude Include="error.hpp" />
     <ClInclude Include="item.hpp" />
-    <ClInclude Include="manage.hpp" />
+    <ClInclude Include="item_manager.hpp" />
     <ClInclude Include="manage_test.hpp" />
     <ClInclude Include="sqlite3.h" />
     <ClInclude Include="storage.hpp" />

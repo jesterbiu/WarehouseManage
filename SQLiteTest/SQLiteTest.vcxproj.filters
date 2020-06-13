@@ -24,21 +24,18 @@
     <ClCompile Include="storage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="manage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="database.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="manage_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="item_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sqlite3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="manage.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="item.hpp">
@@ -54,6 +51,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="manage_test.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="item_manager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

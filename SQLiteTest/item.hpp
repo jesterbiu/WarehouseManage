@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 
+namespace warehouse
+{ 
 struct Location
 {
 	// Defualt ctor
@@ -33,12 +35,29 @@ struct Location
 		return std::isalpha(shelf) && (slot >= 0);
 	}
 
+	// Relatioship operators
 	bool operator ==(const Location& oth) const
 	{
 		return oth.shelf == shelf 
 			&& oth.slot == slot;
 	}
 
+	bool operator <(const Location& rhs) const
+	{
+		if (shelf < rhs.shelf)
+		{
+			return true;
+		}
+		else if (shelf == rhs.shelf)
+		{
+			return slot < rhs.slot;
+		}
+		else // shelf > rhs.shelf
+		{
+			return false;
+		}		
+	}
+	
 	// Shelf identifier
 	char shelf;
 
@@ -74,7 +93,7 @@ struct Item
 	explicit operator bool() const
 	{
 		return 
-			location && !item_id.empty() && stocks >= 0;
+			!item_id.empty() && stocks >= 0;
 	}
 
 	// Equality
@@ -99,3 +118,4 @@ struct Item
 	int stocks;
 
 };
+}

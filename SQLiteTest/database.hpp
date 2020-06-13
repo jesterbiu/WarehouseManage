@@ -13,7 +13,7 @@ public:
 	}
 
 	// Check if the database is open
-	explicit operator bool()
+	explicit operator bool() const
 	{
 		return db;
 	}
@@ -84,7 +84,8 @@ struct statement_handle
 
 	// Member functions
 	sqlite3_stmt* operator *() { return stmt; }
-	explicit operator bool() { return stmt; }
+	explicit operator bool() const 
+	{ return stmt; }
 
 	// Fields
 	sqlite3_stmt* stmt;
