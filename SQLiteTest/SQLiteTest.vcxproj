@@ -151,6 +151,7 @@
     <ClCompile Include="database.cpp" />
     <ClCompile Include="item_manager.cpp" />
     <ClCompile Include="manage_test.cpp" />
+    <ClCompile Include="order_test.cpp" />
     <ClCompile Include="sqlite3.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="storage.cpp" />
@@ -161,6 +162,9 @@
     <ClInclude Include="item.hpp" />
     <ClInclude Include="item_manager.hpp" />
     <ClInclude Include="manage_test.hpp" />
+    <ClInclude Include="order.hpp" />
+    <ClInclude Include="order_manager.hpp" />
+    <ClInclude Include="order_test.hpp" />
     <ClInclude Include="sqlite3.h" />
     <ClInclude Include="storage.hpp" />
   </ItemGroup>

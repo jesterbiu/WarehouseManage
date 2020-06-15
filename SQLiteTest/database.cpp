@@ -1,4 +1,7 @@
 #include "database.hpp"
+
+using namespace warehouse;
+
 // The 2nd argument to the sqlite3_exec() callback function is the number of columns in the result.
 // The 3rd argument to the sqlite3_exec() callback is an array of pointers to strings obtained 
 //		as if from sqlite3_column_text(), one for each column.

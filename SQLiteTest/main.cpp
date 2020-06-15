@@ -1,5 +1,6 @@
 #include <iostream>
 #include "manage_test.hpp"
+#include "order_test.hpp"
 using namespace warehouse;
 void print_item(const Item& i)
 {
@@ -49,7 +50,7 @@ int main()
     }
 #endif
 
-    Tests::manage_test();
+    Tests::order_test();
 
     return 0;
 

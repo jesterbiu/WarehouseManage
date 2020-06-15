@@ -1,107 +1,166 @@
 #include "storage.hpp"
 
 
-namespace warehouse {
-// Utility function
-// Split a string by the spliter given and return all fractions
-std::vector<std::string> split(const std::string& str, char spliter)
-{
-	std::vector<std::string> vs;
-	if (str.empty() || spliter == '\0')
+namespace warehouse 
+{	
+	std::vector<std::string> split(const std::string& str, char spliter)
 	{
+		std::vector<std::string> vs;
+		if (str.empty() || spliter == '\0')
+		{
+			return vs;
+		}
+
+		for (auto i1 = str.cbegin(); i1 != str.cend(); i1++)
+		{
+			// Look for spliter
+			auto i2 = i1;
+			for (; i2 != str.cend() && *i2 != spliter; i2++)
+			{
+			}
+
+			// Split and store and substring
+			vs.push_back(std::string(i1, i2));
+
+			if (i2 != str.cend())
+				i1 = i2;		// Continue
+			else
+				break;			// End fo the string
+		}
+
 		return vs;
 	}
 
-	for (auto i1 = str.cbegin(); i1 != str.cend(); i1++)
+	void storage::read_item_table(const std::string& filename, std::vector<Item>& vi, Item_File_Type filetype)
 	{
-		// Look for spliter
-		auto i2 = i1;
-		for (; i2 != str.cend() && *i2 != spliter; i2++)
+		// Open file stream
+		std::ifstream fs(filename);
+		if (!fs.is_open())
 		{
+			throw warehouse_except("read_item_table: failed to open file!");
+			return;
 		}
 
-		// Split and store and substring
-		vs.push_back(std::string(i1, i2));
-
-		if (i2 != str.cend())
-			i1 = i2;		// Continue
-		else
-			break;			// End fo the string
-	}
-
-	return vs;
-}
-
-void storage::read_item_table(const std::string& filename, std::vector<Item>& vi, Item_File_Type filetype)
-{
-	// Open file stream
-	std::ifstream fs(filename);
-	if (!fs.is_open())
-	{
-		throw warehouse_except("read_location_item_table: failed to open file!");
-		return;
-	}
-
-	// Dispose the first line which is a comment
-	//auto line = std::string();
-	if (!fs.eof())
-	{
-		std::string s;
-		std::getline(fs, s);
-	}
-
-	// Read file
-	std::string line;
-	while (!fs.eof())
-	{
-		std::getline(fs, line);
-		auto vs = split(line, ',');		// Seperated columns by comma
-		auto item = extract_item(vs, filetype);
-
-		if (item)
+		// Dispose the first line which is a comment
+		//auto line = std::string();
+		if (!fs.eof())
 		{
-			vi.push_back(item);
+			std::string s;
+			std::getline(fs, s);
 		}
-	}
 
-	// Close stream
-	fs.close();
-
-}
-
-Item storage::extract_item(const std::vector<std::string>& vi, Item_File_Type filetype)
-{
-	// Extract based on filetype
-	switch (filetype)
-	{
-	case Item_File_Type::Located:
-		if (vi.size() == 4)
+		// Read file
+		std::string line;
+		while (!fs.eof())
 		{
-			return Item
+			std::getline(fs, line);
+			auto vs = split(line, ',');		// Seperated columns by comma
+			auto item = extract_item(vs, filetype);
+
+			if (item)
 			{
-				Location {vi[0][0], std::stoi(vi[1])},	// location
-				vi[2],									// item_id
-				std::stoi(vi[3])						// stocks
-			};
+				vi.push_back(item);
+			}
 		}
-		break;
-	case Item_File_Type::NotLocated:
-		if (vi.size() == 2)
-		{
-			return Item
-			{
-				Location(),								// location
-				vi[0],									// item_id
-				std::stoi(vi[1])						// stocks
-			};
-		}
-		break;
-	default:
-		break;
+
+		// Close stream
+		fs.close();
+
 	}
 
-	// If filetype or count of fields not matched 
-	// return an invalid item
-	return Item();
-}
+	Item storage::extract_item(const std::vector<std::string>& vi, Item_File_Type filetype)
+	{
+		// Extract based on filetype
+		switch (filetype)
+		{
+		case Item_File_Type::Located:
+			if (vi.size() == 4)
+			{
+				return Item
+				{
+					Location {vi[0][0], std::stoi(vi[1])},	// location
+					vi[2],									// item_id
+					std::stoi(vi[3])						// stocks
+				};
+			}
+			break;
+		case Item_File_Type::NotLocated:
+			if (vi.size() == 2)
+			{
+				return Item
+				{
+					Location(),								// location
+					vi[0],									// item_id
+					std::stoi(vi[1])						// stocks
+				};
+			}
+			break;
+		default:
+			break;
+		}
+
+		// If filetype or count of fields not matched 
+		// return an invalid item
+		return Item();
+	}
+
+	void get_order(std::ifstream& fs, Order& order, std::vector<Order>& vo)
+	{
+
+	}
+
+	void storage::read_order_table(const std::string& filename, std::vector<Order>& vo)
+	{
+		// Open file stream
+		std::ifstream fs(filename);
+		if (!fs.is_open())
+		{
+			throw warehouse_except("read_order_table: failed to open file!");
+			return;
+		}
+
+		// Dispose the first line which is a comment
+		//auto line = std::string();
+		if (!fs.eof())
+		{
+			std::string s;
+			std::getline(fs, s);
+		}
+
+		// Read file
+		std::string line;
+		Order order;
+		while (!fs.eof())
+		{			
+			std::getline(fs, line);
+			auto vs = split(line, ',');		// Seperated columns by comma
+
+			if (vs.empty())
+			{
+				if (order)
+					vo.push_back(order);
+				break;
+			}
+			
+			// Extract a new order if the first column is not empty
+			if (!vs[0].empty())
+			{
+				if (order)
+					vo.push_back(order);
+				order = extract_order(vs);
+			}
+
+			// Continue to extract a good's info
+			auto g = extract_good(vs);
+			if (g.first)
+			{
+				order.goods.push_back(g.second);
+			}
+
+		}
+
+		// Close stream
+		fs.close();
+	}
+
 }

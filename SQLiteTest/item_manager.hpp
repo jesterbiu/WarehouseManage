@@ -9,8 +9,7 @@
 #include "database.hpp"
 #include "item.hpp"
 
-namespace warehouse
-{
+namespace warehouse {
 class item_manager
 {	
 private:
@@ -27,7 +26,7 @@ public:
 	// Copy ctor
 	item_manager(const item_manager& oth) :
 		db(oth.db), locations_avail(oth.locations_avail) {}
-	// Copy-assignment ctor
+	// Copy-assignment
 	item_manager& operator =(const item_manager& oth)
 	{
 		if (this != &oth)
