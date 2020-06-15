@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <fstream>
+#include <map>
 #include "error.hpp"
 #include "item.hpp"
 #include "order.hpp"
@@ -22,7 +23,7 @@ namespace warehouse
 		// filetype: Located indicates that the table contains location of the item, NotLocated means not
 		static void read_item_table(const std::string& filename, std::vector<Item>& vi, Item_File_Type filetype);
 
-		static void read_order_table(const std::string& filename, std::vector<Order>& vo);
+		static void read_order_table(const std::string& filename, std::map<std::string, Order>& vo);
 
 		template<typename ValType, typename FileType>
 		static void read_table(const std::string& filename, std::vector<Item>& vi, FileType filetype)

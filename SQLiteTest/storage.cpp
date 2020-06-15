@@ -109,7 +109,7 @@ namespace warehouse
 
 	}
 
-	void storage::read_order_table(const std::string& filename, std::vector<Order>& vo)
+	void storage::read_order_table(const std::string& filename, std::map<std::string, Order>& vo)
 	{
 		// Open file stream
 		std::ifstream fs(filename);
@@ -128,33 +128,33 @@ namespace warehouse
 		}
 
 		// Read file
-		std::string line;
-		Order order;
+		std::string line, order_id;
 		while (!fs.eof())
 		{			
 			std::getline(fs, line);
 			auto vs = split(line, ',');		// Seperated columns by comma
 
 			if (vs.empty())
-			{
-				if (order)
-					vo.push_back(order);
-				break;
+			{				
+				continue;
 			}
 			
 			// Extract a new order if the first column is not empty
 			if (!vs[0].empty())
 			{
-				if (order)
-					vo.push_back(order);
-				order = extract_order(vs);
+				order_id = vs[0];
+				vo.emplace(order_id, Order(order_id));
 			}
 
 			// Continue to extract a good's info
 			auto g = extract_good(vs);
 			if (g.first)
 			{
-				order.goods.push_back(g.second);
+				if (order_id.empty())
+				{
+					throw warehouse_except("storage::read_order_table: missing order id!");
+				}
+				vo[order_id].goods.push_back(g.second);
 			}
 
 		}
