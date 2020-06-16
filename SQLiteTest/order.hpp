@@ -6,7 +6,7 @@
 namespace warehouse {
 	enum class Order_Status_Type
 	{
-		Invalid,			// The order is not valid 
+		Invalid = 0,		// The order is not valid 
 		PendForSelecting,	// The order just generated and goods are not selected
 		Selected,			// Goods in the order are selected from the warehouse
 		Refunded			// Refund is raised

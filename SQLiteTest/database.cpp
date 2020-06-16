@@ -34,53 +34,58 @@ int create_table_callback(void* outside, int row_count, char** col_vals, char** 
 
 database::database()
 {
-	// Open an instance
+	// Open database instance
 	auto rc = sqlite3_open(":memory:", &db);
 	if (SQLITE_OK != rc)
 	{
 		std::cout << sqlite3_errmsg(db);
 		db = nullptr;
-		return;
+		throw warehouse_except("database::database(): sqlite3_open() failed!", rc);
 	}
 
-	// Create item table
-	const char sqlstmt[] =
-		"CREATE TABLE items (shelf INTEGER, slot INTEGER, id TEXT PRIMARY KEY NOT NULL, stocks INTEGER)";	
-	char* errmsg = NULL;	
-	rc = sqlite3_exec(db, sqlstmt, create_table_callback, 0, &errmsg);	
+	create_item_table();
+	create_order_table();
+	create_refund_order_table();
+}
+
+void database::create_table(const char* sqlstmt)
+{
+	// Pointer to database error message
+	char* errmsg = NULL;
+
+	// Create the Item table
+	auto rc = sqlite3_exec(db, sqlstmt, NULL, NULL, &errmsg);
 	if (rc != SQLITE_OK)
 	{
-		std::cout << "FAILED to prepare create table: ";
 		if (errmsg)
 		{
 			std::cout << errmsg << "\n";
 		}
-		else
-		{
-			std::cout << "NULL PTR";
-		}
 		db = nullptr;
-		return;
+		throw warehouse_except("database::create_table(): sqlite3_exec() failed!", rc);
 	}
-	
-	// Validate creation
-	const char sql[] =
-		"SELECT name FROM sqlite_temp_master WHERE type = 'table' AND name = 'items';";
-	rc = sqlite3_exec(db, sql, create_table_callback, 0, &errmsg);
-	
-	if (rc != SQLITE_OK)
-	{
-		std::cout << "FAILED to find created table: ";
-		if (errmsg)
-		{
-			std::cout << errmsg << "\n";
-		}
-		else
-		{
-			std::cout << "NULL PTR";
-		}
-		db = nullptr;
-		return;
-	}
-//*/	
+}
+
+void database::create_item_table()
+{
+	static const char sqlstmt[] =
+		"CREATE TABLE items (shelf INTEGER, slot INTEGER, id TEXT PRIMARY KEY NOT NULL, stocks INTEGER)";
+	create_table(sqlstmt);
+}
+
+void database::create_order_table()
+{
+	static const char sqlstmt_orders[] =
+		"CREATE TABLE order (order_id TEXT PRIMANRY KEY NOT NULL, status INTEGER)";
+	static const char sqlstmt_order_details[] =
+		"CREATE TABLE order_detail (order_id TEXT, item_id TEXT, quantity INTEGER)";
+	create_table(sqlstmt_orders);
+	create_table(sqlstmt_order_details);
+}
+
+void database::create_refund_order_table()
+{
+	static const char sqlstmt_refund_orders[] =
+		"CREATE TABLE refund_order (order_id TEXT, item_id TEXT, refund_quantity INTEGER)";
+	create_table(sqlstmt_refund_orders);
 }

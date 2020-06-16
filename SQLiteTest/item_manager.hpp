@@ -61,7 +61,7 @@ private:
 	inline statement_handle id_query_stmt()
 	{
 		static auto sqlstmt =
-			"SELECT shelf, slot, id, stocks FROM items WHERE id = $id_";
+			"SELECT * FROM items WHERE id = $id_";
 		return statement_handle{ sqlstmt, **db };
 	}
 

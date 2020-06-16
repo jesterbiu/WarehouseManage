@@ -2,6 +2,7 @@
 #include <tuple>
 #include <iostream>
 #include "sqlite3.h"
+#include "error.hpp"
 // warehouse database
 namespace warehouse {
 	class database
@@ -38,6 +39,12 @@ namespace warehouse {
 
 		// Field
 		sqlite3* db;
+
+		// table creators
+		void create_table(const char* sqlstmt);
+		void create_item_table();
+		void create_order_table();
+		void create_refund_order_table();
 	};
 
 	struct statement_handle
@@ -46,7 +53,8 @@ namespace warehouse {
 		statement_handle() :
 			stmt(nullptr)
 		{}
-		statement_handle(const char* sqlstmt, sqlite3* db)
+		statement_handle(const char* sqlstmt, sqlite3* db) :
+			stmt(nullptr)
 		{
 			auto rc = sqlite3_prepare_v2(
 				db,
@@ -62,6 +70,8 @@ namespace warehouse {
 				stmt = nullptr;
 			}
 		}
+
+		// Movable but not copiable
 		statement_handle(statement_handle&& oth) noexcept :
 			stmt(std::exchange(oth.stmt, nullptr))
 		{ }

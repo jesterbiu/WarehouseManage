@@ -27,9 +27,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="storage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -39,14 +36,11 @@
     <ClCompile Include="item_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="manage_test.cpp">
-      <Filter>Source Files\tests</Filter>
-    </ClCompile>
     <ClCompile Include="sqlite3.c">
       <Filter>Source Files\sqlite</Filter>
     </ClCompile>
-    <ClCompile Include="order_test.cpp">
-      <Filter>Source Files\tests</Filter>
+    <ClCompile Include="order_manager.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -68,17 +62,11 @@
     <ClInclude Include="order_manager.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="manage_test.hpp">
-      <Filter>Header Files\tests</Filter>
-    </ClInclude>
     <ClInclude Include="sqlite3.h">
       <Filter>Header Files\sqlite</Filter>
     </ClInclude>
     <ClInclude Include="order.hpp">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="order_test.hpp">
-      <Filter>Header Files\tests</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
