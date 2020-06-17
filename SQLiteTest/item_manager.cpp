@@ -150,7 +150,7 @@ void item_manager::bind_insert(const Item& d, sqlite3_stmt* stmthandle)
 		|| rc3 != SQLITE_OK
 		|| rc4 != SQLITE_OK)
 	{
-		throw warehouse_except("bind_insert: bind failed!");
+		throw warehouse_except("item_manager::bind_insert(): bind failed!");
 	}
 
 }

@@ -160,6 +160,7 @@
     <ClInclude Include="error.hpp" />
     <ClInclude Include="item.hpp" />
     <ClInclude Include="item_manager.hpp" />
+    <ClInclude Include="manager.hpp" />
     <ClInclude Include="order.hpp" />
     <ClInclude Include="order_manager.hpp" />
     <ClInclude Include="sqlite3.h" />

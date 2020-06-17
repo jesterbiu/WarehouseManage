@@ -6,14 +6,51 @@
 namespace warehouse {
 	enum class Order_Status_Type
 	{
-		Invalid = 0,		// The order is not valid 
+		Invalid,		// The order is not valid 
 		PendForSelecting,	// The order just generated and goods are not selected
 		Selected,			// Goods in the order are selected from the warehouse
 		Refunded			// Refund is raised
 	};
 	
+	inline int status_to_int(Order_Status_Type status)
+	{
+		switch (status)
+		{
+		case Order_Status_Type::Invalid:
+			return 0;
+		case Order_Status_Type::PendForSelecting:
+			return 1;
+		case Order_Status_Type::Selected:
+			return 2;
+		case Order_Status_Type::Refunded:
+			return 3;
+		default:
+			throw warehouse_except("Unknown order status!");
+			break;
+		}
+	}
+
+	inline Order_Status_Type int_to_status(int status)
+	{
+		switch (status)
+		{
+		case 0:
+			return Order_Status_Type::Invalid;
+		case 1:
+			return Order_Status_Type::PendForSelecting;
+		case 2:
+			return Order_Status_Type::Selected;
+		case 3:
+			return Order_Status_Type::Refunded;
+		default:
+			throw warehouse_except("Unknown order status!");
+			break;
+		}
+	}
+
 	// a pair of item_id and quantity
 	using good = std::pair<std::string, int>;
+
 	struct Order
 	{
 		// Default ctor
@@ -40,9 +77,12 @@ namespace warehouse {
 		// Default dotr
 		~Order() {}
 
+		// Check if the order is valid
 		explicit operator bool() const
 		{
-			return status != Order_Status_Type::Invalid;
+			return !order_id.empty()
+				&& status != Order_Status_Type::Invalid
+				&& !goods.empty();
 		}
 
 		bool operator ==(const Order& oth) const
@@ -83,8 +123,14 @@ namespace warehouse {
 		// Default dotr
 		~Refund_Order() {}
 
+		explicit operator bool() const
+		{
+			return !order_id.empty()
+				&& !refund_goods.empty();
+		}
+
 		// Fields
 		std::string order_id;
-		std::vector<std::pair<std::string, int>> refund_goods; // item_id, quantity
+		std::vector<good> refund_goods; // item_id, quantity
 	};
 }
