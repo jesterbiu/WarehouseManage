@@ -4,6 +4,6 @@
 using namespace Tests;
 int main()
 {
+	//item_manager_test();
 	order_test();
-	manage_test();
 }

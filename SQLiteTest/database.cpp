@@ -40,7 +40,7 @@ database::database()
 	{
 		std::cout << sqlite3_errmsg(db);
 		db = nullptr;
-		throw warehouse_except("database::database(): sqlite3_open() failed!", rc);
+		throw warehouse_exception("database::database(): sqlite3_open() failed!", rc);
 	}
 
 	create_item_table();
@@ -62,23 +62,23 @@ void database::create_table(const char* sqlstmt)
 			std::cout << errmsg << "\n";
 		}
 		db = nullptr;
-		throw warehouse_except("database::create_table(): sqlite3_exec() failed!", rc);
+		throw warehouse_exception("database::create_table(): sqlite3_exec() failed!", rc);
 	}
 }
 
 void database::create_item_table()
 {
 	static const char sqlstmt[] =
-		"CREATE TABLE items (shelf INTEGER, slot INTEGER, id TEXT PRIMARY KEY NOT NULL, stocks INTEGER)";
+		"CREATE TABLE items (shelf INTEGER, slot INTEGER, id TEXT PRIMARY KEY, stocks INTEGER)";
 	create_table(sqlstmt);
 }
 
 void database::create_order_table()
 {
 	static const char sqlstmt_orders[] =
-		"CREATE TABLE order (order_id TEXT PRIMANRY KEY NOT NULL, status INTEGER)";
+		"CREATE TABLE orders (order_id TEXT PRIMARY KEY, status INTEGER)";
 	static const char sqlstmt_order_details[] =
-		"CREATE TABLE order_detail (order_id TEXT, item_id TEXT, quantity INTEGER)";
+		"CREATE TABLE order_details (order_id TEXT, item_id TEXT, quantity INTEGER)";
 	create_table(sqlstmt_orders);
 	create_table(sqlstmt_order_details);
 }
@@ -86,6 +86,6 @@ void database::create_order_table()
 void database::create_refund_order_table()
 {
 	static const char sqlstmt_refund_orders[] =
-		"CREATE TABLE refund_order (order_id TEXT, item_id TEXT, refund_quantity INTEGER)";
+		"CREATE TABLE refund_orders (order_id TEXT, item_id TEXT, refund_quantity INTEGER)";
 	create_table(sqlstmt_refund_orders);
 }

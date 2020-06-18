@@ -37,7 +37,7 @@ namespace warehouse
 		std::ifstream fs(filename);
 		if (!fs.is_open())
 		{
-			throw warehouse_except("read_item_table: failed to open file!");
+			throw warehouse_exception("read_item_table: failed to open file!");
 			return;
 		}
 
@@ -115,7 +115,7 @@ namespace warehouse
 		std::ifstream fs(filename);
 		if (!fs.is_open())
 		{
-			throw warehouse_except("read_order_table: failed to open file!");
+			throw warehouse_exception("read_order_table: failed to open file!");
 			return;
 		}
 
@@ -143,7 +143,8 @@ namespace warehouse
 			if (!vs[0].empty())
 			{
 				order_id = vs[0];
-				vo.emplace(order_id, Order(order_id));
+				vo.emplace(order_id, Order{ order_id });
+				vo[order_id].status = Order_Status_Type::PendForSelecting;
 			}
 
 			// Continue to extract a good's info
@@ -152,7 +153,7 @@ namespace warehouse
 			{
 				if (order_id.empty())
 				{
-					throw warehouse_except("storage::read_order_table: missing order id!");
+					throw warehouse_exception("storage::read_order_table: missing order id!");
 				}
 				vo[order_id].goods.push_back(g.second);
 			}

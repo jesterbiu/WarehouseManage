@@ -10,7 +10,7 @@ using namespace warehouse;
 namespace Tests
 {
 	
-		void manage_test()
+		void item_manager_test()
 		{
 			
             std::vector<Item> vi;            
@@ -83,15 +83,15 @@ namespace Tests
                 }// end of for
 #endif
 
-                test_part_two(mp);
+                item_manager_test_pt2(mp);
             }
-            catch (warehouse_except& expt)
+            catch (warehouse_exception& expt)
             {
                 std::cout << expt.what();                
             }
 		}
 
-        void test_part_two(item_manager& mp)
+        void item_manager_test_pt2(item_manager& mp)
         {
             std::vector<Item> vi;
            

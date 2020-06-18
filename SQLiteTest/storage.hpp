@@ -2,7 +2,7 @@
 #include <vector>
 #include <fstream>
 #include <map>
-#include "error.hpp"
+#include "warehouse_exception.hpp"
 #include "item.hpp"
 #include "order.hpp"
 
@@ -32,7 +32,7 @@ namespace warehouse
 			std::ifstream fs(filename);
 			if (!fs.is_open())
 			{
-				throw warehouse_except("read_location_item_table: failed to open file!");
+				throw warehouse_exception("read_location_item_table: failed to open file!");
 				return;
 			}
 

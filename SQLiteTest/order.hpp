@@ -25,7 +25,7 @@ namespace warehouse {
 		case Order_Status_Type::Refunded:
 			return 3;
 		default:
-			throw warehouse_except("Unknown order status!");
+			throw warehouse_exception("Unknown order status!");
 			break;
 		}
 	}
@@ -43,7 +43,7 @@ namespace warehouse {
 		case 3:
 			return Order_Status_Type::Refunded;
 		default:
-			throw warehouse_except("Unknown order status!");
+			throw warehouse_exception("Unknown order status!");
 			break;
 		}
 	}
@@ -59,7 +59,24 @@ namespace warehouse {
 		{}
 		// Param ctor
 		Order(const std::string& id) :
-			status(Order_Status_Type::PendForSelecting), order_id(id) {}
+			status(Order_Status_Type::Invalid), order_id(id) {}
+		Order(const std::string& id, const std::vector<good>& vg) :
+			status(Order_Status_Type::Invalid), order_id(id), goods(vg) 
+		{
+			if (goods.size() > 0)
+			{
+				status = Order_Status_Type::PendForSelecting;
+			}
+		}
+		template<typename Container>
+		Order(const std::string& id, const Container& c) :
+			status(Order_Status_Type::Invalid), order_id(id), good(c.begin(), c.end())
+		{
+			if (goods.size() > 0)
+			{
+				status = Order_Status_Type::PendForSelecting;
+			}
+		}
 		// Copy ctor
 		Order(const Order& oth) : 
 			status(oth.status), order_id(oth.order_id), goods(oth.goods) {}

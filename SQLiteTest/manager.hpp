@@ -42,13 +42,13 @@ namespace warehouse
 				switch (rc)
 				{
 				case SQLITE_BUSY:
-					throw warehouse_except("SQLITE_BUSY", rc);
+					throw warehouse_exception("SQLITE_BUSY", rc);
 				case SQLITE_ERROR:
-					throw warehouse_except("SQLITE_ERROR", rc);
+					throw warehouse_exception("SQLITE_ERROR", rc);
 				case SQLITE_MISUSE:
-					throw warehouse_except("SQLITE_MISUSE", rc);
+					throw warehouse_exception("SQLITE_MISUSE", rc);
 				default:
-					throw warehouse_except("OTH", rc);
+					throw warehouse_exception("OTH", rc);
 				}
 			}
 			return rc;

@@ -2,7 +2,10 @@
 #include <tuple>
 #include <iostream>
 #include "sqlite3.h"
-#include "error.hpp"
+#include "warehouse_exception.hpp"
+
+
+
 // warehouse database
 namespace warehouse {
 	class database
@@ -67,7 +70,8 @@ namespace warehouse {
 			// Error handling
 			if (rc != SQLITE_OK)
 			{
-				stmt = nullptr;
+				auto errmsg = sqlite3_errmsg(db);
+				throw warehouse_exception{ errmsg };
 			}
 		}
 

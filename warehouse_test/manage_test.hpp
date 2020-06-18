@@ -6,6 +6,6 @@
 
 namespace Tests
 {
-	void manage_test();
-	void test_part_two(warehouse::item_manager&);
+	void item_manager_test();
+	void item_manager_test_pt2(warehouse::item_manager&);
 }

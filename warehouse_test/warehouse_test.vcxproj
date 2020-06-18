@@ -91,7 +91,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>..\SQLiteTest\Debug\sqlite3.obj;..\SQLiteTest\Debug\database.obj;..\SQLiteTest\Debug\item_manager.obj;..\SQLiteTest\Debug\storage.obj;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>..\SQLiteTest\Debug\sqlite3.obj;..\SQLiteTest\Debug\warehouse_exception.obj;..\SQLiteTest\Debug\database.obj;..\SQLiteTest\Debug\item_manager.obj;..\SQLiteTest\Debug\order_manager.obj;..\SQLiteTest\Debug\storage.obj;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

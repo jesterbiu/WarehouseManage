@@ -5,7 +5,6 @@
 #include <cstring>
 #include <map>
 #include <vector>
-#include "error.hpp"
 #include "database.hpp"
 #include "item.hpp"
 

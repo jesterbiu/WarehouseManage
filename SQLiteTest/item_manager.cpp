@@ -117,7 +117,6 @@ void item_manager::extract_query(Item& d, sqlite3_stmt* stmthandle)
 	};
 
 	// id
-	size_t buf_sz = 100;
 	auto src = (const char*)sqlite3_column_text(stmthandle, 2);		
 	d.item_id = src;
 
@@ -150,7 +149,7 @@ void item_manager::bind_insert(const Item& d, sqlite3_stmt* stmthandle)
 		|| rc3 != SQLITE_OK
 		|| rc4 != SQLITE_OK)
 	{
-		throw warehouse_except("item_manager::bind_insert(): bind failed!");
+		throw warehouse_exception("item_manager::bind_insert(): bind failed!");
 	}
 
 }
@@ -165,13 +164,13 @@ int item_manager::step(sqlite3_stmt* stmthandle)
 		switch (rc)
 		{
 		case SQLITE_BUSY:
-			throw warehouse_except("SQLITE_BUSY", rc);
+			throw warehouse_exception("SQLITE_BUSY", rc);
 		case SQLITE_ERROR:
-			throw warehouse_except("SQLITE_ERROR", rc);
+			throw warehouse_exception("SQLITE_ERROR", rc);
 		case SQLITE_MISUSE:
-			throw warehouse_except("SQLITE_MISUSE", rc);
+			throw warehouse_exception("SQLITE_MISUSE", rc);
 		default:
-			throw warehouse_except("OTH", rc);
+			throw warehouse_exception("OTH", rc);
 		}
 	}
 	return rc;
@@ -294,7 +293,7 @@ std::vector<Location> item_manager::get_unavail_locations()
 			std::cout << errmsg;
 		}
 		std::cout << std::endl;
-		throw warehouse_except(errmsg, rc);
+		throw warehouse_exception(errmsg, rc);
 	}
 	
 	return locs;
