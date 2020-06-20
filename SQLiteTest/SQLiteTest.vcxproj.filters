@@ -13,12 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Header Files\tests">
-      <UniqueIdentifier>{98bdb456-d80b-454d-ace4-7e0941e0ca0d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\tests">
-      <UniqueIdentifier>{dc4850a1-9a5d-49ef-b1ca-99f0c6e704f6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\sqlite">
       <UniqueIdentifier>{7052111d-8a9e-40c5-8c1f-8f90476ba403}</UniqueIdentifier>
     </Filter>

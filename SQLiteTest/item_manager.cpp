@@ -7,11 +7,8 @@ bool item_manager::add_item(const Item& pitem)
 	if (!pitem) return false;
 
 	// Prepare statement
-	auto stmthandle = insert_stmt();
-	if (!stmthandle)
-	{
-		return false;
-	}
+	auto stmthandle = item_statement_generator::insert_stmt(get_database());
+	database::verify_stmt_handle(stmthandle);
 
 	// Get a copy in case location allocation happens
 	auto item = Item(pitem); 
@@ -38,7 +35,7 @@ bool item_manager::add_item(const Item& pitem)
 	bind_insert(item, *stmthandle);
 
 	// Execute insertion
-	if (SQLITE_DONE == step(*stmthandle))
+	if (SQLITE_DONE == database::step(*stmthandle))
 	{		
 		occupy_location(item.location);
 		return true;
@@ -73,38 +70,31 @@ std::pair<bool, Item> item_manager::check_location(const Location& location)
 	};
 
 	// Prepare statement
-	auto stmthandle = location_query_stmt();
-	if (!stmthandle)
-	{
-		Item item; // Invalid item
-		return std::make_pair(false, item);
-	}
+	auto stmthandle = item_statement_generator::location_query_stmt(get_database());
+	database::verify_stmt_handle(stmthandle);
 
-	// Bind sql parameter to values
-	auto rc1 = sqlite3_bind_int(*stmthandle, 1, location.shelf);
-	auto rc2 = sqlite3_bind_int(*stmthandle, 2, location.slot);
-	if (rc1 != SQLITE_OK || rc2 != SQLITE_OK)
-	{
-		std::cout << "check_location: bind failed!\n";
-		Item item; // Invalid item
-		return std::make_pair(false, item);
-	}
+	// Bind SQL params:
+	// Bind shelf:
+	auto rc1 = database::bind_int(*stmthandle, 1, location.shelf);
+	database::verify_binding(rc1);
+
+	// Bind slot:
+	auto rc2 = database::bind_int(*stmthandle, 2, location.slot);
+	database::verify_binding(rc2);
 
 	// Execute sql
-	auto rc = step(*stmthandle);
-	if (rc != SQLITE_DONE && rc != SQLITE_ROW)
+	auto rc = database::step(*stmthandle);
+	if (!database::step_has_result(rc))
 	{
-		std::cout << "check_location: step failed!\n";
 		Item item; // Invalid item
 		return std::make_pair(false, item);
 	}
-
+		
 	// Extract results
 	auto d = Item{};
 	extract_query(d, *stmthandle);
 
 	return std::make_pair(true, d);
-
 }
 
 void item_manager::extract_query(Item& d, sqlite3_stmt* stmthandle)
@@ -112,137 +102,74 @@ void item_manager::extract_query(Item& d, sqlite3_stmt* stmthandle)
 	// Location
 	d.location = Location
 	{
-		(char)sqlite3_column_int(stmthandle, 0),	// shelf id
-		sqlite3_column_int(stmthandle, 1),			// slot index
+		(char)database::extract_int(stmthandle, 0),		// shelf id
+		database::extract_int(stmthandle, 1),			// slot index
 	};
 
 	// id
-	auto src = (const char*)sqlite3_column_text(stmthandle, 2);		
-	d.item_id = src;
+	d.item_id = database::extract_text(stmthandle, 2);
 
 	// stocks
-	d.stocks = sqlite3_column_int(stmthandle, 3);
+	d.stocks = database::extract_int(stmthandle, 3);
 }
 
 void item_manager::bind_insert(const Item& d, sqlite3_stmt* stmthandle)
 {
 	// Bind location
-	auto rc1 = sqlite3_bind_int(stmthandle, 1, d.location.shelf);
-	auto rc2 = sqlite3_bind_int(stmthandle, 2, d.location.slot);
+	auto rc1 = database::bind_int(stmthandle, 1, d.location.shelf);
+	database::verify_binding(rc1);
+	auto rc2 = database::bind_int(stmthandle, 2, d.location.slot);
+	database::verify_binding(rc2);
 
 	// Bind id
-	const char* id = d.item_id.c_str();
-	auto rc3 = sqlite3_bind_text(
-		stmthandle,
-		3,
-		id,
-		d.item_id.size(),	// the offset of '\0'
-		nullptr				// no deleter
-		);
+	auto rc3 = database::bind_text(stmthandle, 3, d.item_id);
+	database::verify_binding(rc3);
 
 	// Bind stocks
-	auto rc4 = sqlite3_bind_int(stmthandle, 4, d.stocks);
-
-	// Validate
-	if (rc1 != SQLITE_OK
-		|| rc2 != SQLITE_OK
-		|| rc3 != SQLITE_OK
-		|| rc4 != SQLITE_OK)
-	{
-		throw warehouse_exception("item_manager::bind_insert(): bind failed!");
-	}
-
-}
-
-int item_manager::step(sqlite3_stmt* stmthandle)
-{
-	auto rc = sqlite3_step(stmthandle);
-	
-	// Error
-	if (rc != SQLITE_DONE && rc != SQLITE_ROW)
-	{
-		switch (rc)
-		{
-		case SQLITE_BUSY:
-			throw warehouse_exception("SQLITE_BUSY", rc);
-		case SQLITE_ERROR:
-			throw warehouse_exception("SQLITE_ERROR", rc);
-		case SQLITE_MISUSE:
-			throw warehouse_exception("SQLITE_MISUSE", rc);
-		default:
-			throw warehouse_exception("OTH", rc);
-		}
-	}
-	return rc;
+	auto rc4 = database::bind_int(stmthandle, 4, d.stocks);
+	database::verify_binding(rc4);	
 }
 
 std::pair<bool, statement_handle> item_manager::query_by_id(const std::string& id)
 {
 	// Prepare statement
-	auto stmthandle = id_query_stmt();
-	if (!stmthandle)
-	{
-		return std::make_pair(false, std::move(stmthandle));
-	}
+	auto stmthandle = item_statement_generator::id_query_stmt(get_database());
+	database::verify_stmt_handle(stmthandle);
 
 	// Bind sql parameter to input value
-	auto rc = sqlite3_bind_text(
-		*stmthandle, 1,
-		id.c_str(),
-		id.size(),	// offest of '\0'
-		nullptr		// no deleter
-		);
-	if (rc != SQLITE_OK)
-	{
-		std::cout << "query_by_id: bind failed!";
-		return std::make_pair(false, std::move(stmthandle));
-	}
+	auto rc = database::bind_text(*stmthandle, 1, id);
+	database::verify_binding(rc);
 
 	// Execute sql
-	rc = step(*stmthandle);
-	if (rc != SQLITE_DONE && rc != SQLITE_ROW)
+	rc = database::step(*stmthandle);
+	if (database::step_has_result(rc))
 	{
-		return std::make_pair(false, std::move(stmthandle));
+		return std::make_pair(true, std::move(stmthandle));
 	}
 	else
 	{
-		return std::make_pair(true, std::move(stmthandle));
+		return std::make_pair(false, std::move(stmthandle));
 	}
 }
 
 bool item_manager::update_stocks(const std::string& id, int updated_stocks)
 {
 	// Prepare statement
-	auto stmthandle = update_stocks_stmt();
-	if (!stmthandle)
-	{
-		return false;
-	}
+	auto stmthandle = item_statement_generator::update_stocks_stmt(get_database());
+	database::verify_stmt_handle(stmthandle);
 
-	// Bind sql parameter to input value
-	auto rc1 = sqlite3_bind_int(*stmthandle, 1, updated_stocks);
-	auto rc2 = sqlite3_bind_text(
-		*stmthandle, 2,
-		id.c_str(),
-		id.size(),	// offest of '\0'
-		nullptr		// no deleter
-		);
-	if (rc1 != SQLITE_OK || rc2 != SQLITE_OK)
-	{
-		std::cout << "update_stocks: bind failed!";
-		return false;
-	}
+	// Bind SQL params:
+	// Bind updated stocks
+	auto rc1 = database::bind_int(*stmthandle, 1, updated_stocks); 
+	database::verify_binding(rc1);
+
+	// Bind item_id
+	auto rc2 = database::bind_text(*stmthandle, 2, id);
+	database::verify_binding(rc2);
 
 	// Execute sql
-	auto rc = step(*stmthandle);
-	if (rc != SQLITE_DONE && rc != SQLITE_ROW)
-	{
-		return false;
-	}
-	else
-	{
-		return true;
-	}
+	auto rc = database::step(*stmthandle);
+	return true;
 }
 
 int extract_locs_callback(
@@ -281,7 +208,7 @@ std::vector<Location> item_manager::get_unavail_locations()
 	static auto sqlstmt =
 		"SELECT shelf, slot FROM items";
 	char* errmsg = NULL;
-	auto rc = sqlite3_exec(**db, sqlstmt, extract_locs_callback, &locs, &errmsg);
+	auto rc = sqlite3_exec(get_database(), sqlstmt, extract_locs_callback, &locs, &errmsg);
 
 	// Validate execution
 	if (rc != SQLITE_OK)

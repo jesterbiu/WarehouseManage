@@ -47,6 +47,10 @@ namespace warehouse
 		// Return a statement_handler of a certain SQL statement
 		struct order_statement_generator : public manager::statement_generator
 		{
+		// Schemas:
+		// orders			(order_id TEXT, status	INTEGER)
+		// order_details	(order_id TEXT, item_id TEXT,	quantity		INTEGER)
+		// refund_orders	(order_id TEXT, item_id TEXT,	refund_quantity INTEGER)";
 			inline static statement_handle insert_order_stmt(sqlite3* db)
 			{
 				static const char sqlstmt[] =

@@ -5,32 +5,30 @@
 #include <cstring>
 #include <map>
 #include <vector>
-#include "database.hpp"
+#include "manager.hpp"
 #include "item.hpp"
 
 namespace warehouse {
-class item_manager
+class item_manager : public manager
 {	
-private:
-	// Database instance handle
-	database* db;
 public:
 	// No default ctor
+	item_manager() = delete;
 	// Param ctor
 	item_manager(database* pdb) :
-		db(pdb)
+		manager(pdb)
 	{
 		initialize_locations_avail();
 	}
 	// Copy ctor
 	item_manager(const item_manager& oth) :
-		db(oth.db), locations_avail(oth.locations_avail) {}
+		manager(oth), locations_avail(oth.locations_avail) {}
 	// Copy-assignment
 	item_manager& operator =(const item_manager& oth)
 	{
 		if (this != &oth)
 		{
-			db = oth.db;
+			manager::operator=(oth);
 			locations_avail = oth.locations_avail;
 		}
 		return *this;
@@ -56,46 +54,47 @@ public:
 	bool update_stocks(const std::string& id, int currstock);
 
 private:		
-	// Return a statement_handle which selects item by id
-	inline statement_handle id_query_stmt()
+	struct item_statement_generator : public statement_generator
 	{
-		static auto sqlstmt =
-			"SELECT * FROM items WHERE id = $id_";
-		return statement_handle{ sqlstmt, **db };
-	}
+		// Return a statement_handle which selects item by id
+		inline static statement_handle id_query_stmt(sqlite3* db)
+		{
+			static auto sqlstmt =
+				"SELECT * FROM items WHERE id = $id_";
+			return statement_handle{ sqlstmt, db };
+		}
 
-	// Return a statement_handle which inserts an item
-	inline statement_handle insert_stmt()
-	{
-		static auto sqlstmt =
-			"INSERT INTO items(shelf, slot, id, stocks) VALUES($shelf, $slot, $id_, $stocks_)";
-		return statement_handle{ sqlstmt, **db };
-	}
+		// Return a statement_handle which inserts an item
+		inline static statement_handle insert_stmt(sqlite3* db)
+		{
+			static auto sqlstmt =
+				"INSERT INTO items(shelf, slot, id, stocks) VALUES($shelf, $slot, $id_, $stocks_)";
+			return statement_handle{ sqlstmt, db };
+		}
 
-	// Return a statement_handle which selects item by location
-	inline statement_handle location_query_stmt()
-	{
-		static auto sqlstmt =
-			"SELECT shelf, slot, id, stocks FROM items WHERE shelf = $shelf_ AND slot = $slot_";
-		return statement_handle{ sqlstmt, **db };
-	}
+		// Return a statement_handle which selects item by location
+		inline static statement_handle location_query_stmt(sqlite3* db)
+		{
+			static auto sqlstmt =
+				"SELECT shelf, slot, id, stocks FROM items WHERE shelf = $shelf_ AND slot = $slot_";
+			return statement_handle{ sqlstmt, db };
+		}
 
-	// Return a statement_handle which uodate stocks by id
-	inline statement_handle update_stocks_stmt()
-	{
-		static auto sqlstmt =
-			"UPDATE items SET stocks = $stocks WHERE id = $id_";
-		return statement_handle{ sqlstmt, **db };
-	}
+		// Return a statement_handle which uodate stocks by id
+		inline static statement_handle update_stocks_stmt(sqlite3* db)
+		{
+			static auto sqlstmt =
+				"UPDATE items SET stocks = $stocks WHERE id = $id_";
+			return statement_handle{ sqlstmt, db };
+		}
+	};
+	
 
 	// Bind data to write to (QUERY)
 	void extract_query(Item& d, sqlite3_stmt* stmthandle);
 
 	// Bind data to read from (INSERT, UPDATE)
 	void bind_insert(const Item& d, sqlite3_stmt* stmthandle);
-	
-	// Fetch a row of data and print error if there is any
-	int step(sqlite3_stmt* stmthandle);
 	
 	// Query by item id
 	std::pair<bool, statement_handle> query_by_id(const std::string& id);
@@ -106,7 +105,7 @@ private:
 	const bool Unavailable = false;
 	
 	// Return a vector contains all locations inserted
-	std::vector<Location> get_unavail_locations();	
+	std::vector<Location> get_unavail_locations();		
 	
 	// Initialize locations_avail during instantiation based on the database instance
 	void initialize_locations_avail();

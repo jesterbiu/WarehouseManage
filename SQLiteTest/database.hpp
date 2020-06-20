@@ -16,7 +16,7 @@ namespace warehouse {
 			stmt(nullptr)
 		{}
 		statement_handle(const char* sqlstmt, sqlite3* db) :
-			stmt(nullptr)
+			stmt(nullptr), sql_statement(sqlstmt)
 		{
 			auto rc = sqlite3_prepare_v2(
 				db,
@@ -36,7 +36,8 @@ namespace warehouse {
 
 		// Movable but not copiable
 		statement_handle(statement_handle&& oth) noexcept :
-			stmt(std::exchange(oth.stmt, nullptr))
+			stmt(std::exchange(oth.stmt, nullptr)),
+			sql_statement(oth.sql_statement)
 		{ }
 		statement_handle(const statement_handle& oth) = delete;
 		statement_handle& operator =(statement_handle&& oth) noexcept
@@ -44,6 +45,7 @@ namespace warehouse {
 			if (this != &oth)
 			{
 				stmt = std::exchange(oth.stmt, nullptr);
+				sql_statement = oth.sql_statement;
 			}
 			return *this;
 		}
@@ -64,6 +66,9 @@ namespace warehouse {
 		}
 		bool valid() const { return stmt; }
 
+		// Fields
+		std::string sql_statement;		
+	private:
 		// Fields
 		sqlite3_stmt* stmt;
 	};
@@ -125,9 +130,9 @@ namespace warehouse {
 		}
 
 		// Return code analysis
-		inline static void verify_stmt_handle(statement_handle* pstmt)
+		inline static void verify_stmt_handle(const statement_handle & pstmt)
 		{
-			if (pstmt && pstmt->valid())
+			if (pstmt)
 			{
 				// valid!
 			}

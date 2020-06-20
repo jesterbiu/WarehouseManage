@@ -28,32 +28,7 @@ namespace warehouse
 		{ 
 			return **db; 
 		}
-		
-		// Return SQLITE_DONE if successfully INSERT/UPDATE
-		// Return SQLITE_DONE or SQLITE_ROW if successfully SELECT
-		// Throws an exception otherwise
-		virtual int step(sqlite3_stmt* stmthandle)
-		{
-			auto rc = sqlite3_step(stmthandle);
-
-			// Error
-			if (rc != SQLITE_DONE && rc != SQLITE_ROW)
-			{
-				switch (rc)
-				{
-				case SQLITE_BUSY:
-					throw warehouse_exception("SQLITE_BUSY", rc);
-				case SQLITE_ERROR:
-					throw warehouse_exception("SQLITE_ERROR", rc);
-				case SQLITE_MISUSE:
-					throw warehouse_exception("SQLITE_MISUSE", rc);
-				default:
-					throw warehouse_exception("OTH", rc);
-				}
-			}
-			return rc;
-		}
-		
+				
 		// Includes functions generate statement_handle
 		struct statement_generator {};
 	
