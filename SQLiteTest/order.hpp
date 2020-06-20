@@ -50,7 +50,7 @@ namespace warehouse {
 
 	// a pair of item_id and quantity
 	using good = std::pair<std::string, int>;
-
+	
 	struct Order
 	{
 		// Default ctor
@@ -70,7 +70,7 @@ namespace warehouse {
 		}
 		template<typename Container>
 		Order(const std::string& id, const Container& c) :
-			status(Order_Status_Type::Invalid), order_id(id), good(c.begin(), c.end())
+			status(Order_Status_Type::Invalid), order_id(id), goods(c.begin(), c.end())
 		{
 			if (goods.size() > 0)
 			{
@@ -122,8 +122,22 @@ namespace warehouse {
 		// Default ctor
 		Refund_Order() {}
 		// Param ctor
+		Refund_Order(const std::string& id) :
+			order_id(id) {}
 		Refund_Order(const std::string& id, const std::vector<good>& vrg) :
 			order_id(id), refund_goods(vrg) {}
+		template<typename Container>
+		Refund_Order(const std::string& id, const Container& c) :
+			order_id(id), refund_goods(c.begin(), c.end())
+		{
+			if (refund_goods.size() <= 0)
+			{
+				throw warehouse_exception
+				{
+					"Refund_Order: no refund good!"
+				};
+			}
+		}
 		// Copy ctor
 		Refund_Order(const Refund_Order& oth) :
 			order_id(oth.order_id), refund_goods(oth.refund_goods) {}
@@ -144,6 +158,10 @@ namespace warehouse {
 		{
 			return !order_id.empty()
 				&& !refund_goods.empty();
+		}
+		bool operator ==(const Refund_Order& rhs) const
+		{
+			return order_id == rhs.order_id;
 		}
 
 		// Fields

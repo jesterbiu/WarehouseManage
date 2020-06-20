@@ -13,11 +13,10 @@ public:
 
 	int err_code() const
 	{ return error_code; }
-
 	const char* what() const
 	{
 		return message;
-	}	
+	}		
 };
 
 std::ostream& operator <<(std::ostream& os, const warehouse_exception& we);

@@ -5,23 +5,23 @@ using namespace warehouse;
 // add_order() and its helper functions
 bool order_manager::add_order(const Order& order)
 {
-	// Validate input item
-	if (!order) return false;
-
 	// Execute insertion
 	return insert_order_part(order) && insert_detail_part(order)
 		? true
 		: false;
 }
-
 bool order_manager::insert_order_part(const Order& order)
 {
-	// Prepare statement
-	auto order_stmth = order_statement_generator::insert_order_stmt(get_database());
-	if (!order_stmth)
+	// Validate input
+	if (!order)
 	{
 		return false;
 	}
+
+	// Prepare statement
+	auto order_stmth 
+		= order_statement_generator::insert_order_stmt(get_database());
+	database::verify_stmt_handle(&order_stmth);
 
 	// Bind SQL params
 	bind_insert_order_part(order, *order_stmth);
@@ -31,18 +31,20 @@ bool order_manager::insert_order_part(const Order& order)
 		? true
 		: false;
 }
-
 bool order_manager::insert_detail_part(const Order& order)
 {
+	// Validate input
+	if (order.goods.empty())
+	{
+		return false;
+	}
+
 	for (auto& g : order.goods)
 	{
 		// Prepare statement
 		auto detail_stmth 
 			= order_statement_generator::insert_order_detail_stmt(get_database());
-		if (!detail_stmth)
-		{
-			return false;
-		}
+		database::verify_stmt_handle(&detail_stmth);
 
 		// Bind SQL params
 		bind_insert_detail_part(order.order_id, g, *detail_stmth);
@@ -56,33 +58,58 @@ bool order_manager::insert_detail_part(const Order& order)
 
 	return true;
 }
-//-------------------------------------
+void order_manager::bind_insert_order_part(const Order& order, sqlite3_stmt* order_stmth)
+{
+	// Bind order_id
+	auto rc1 = database::bind_text(order_stmth, 1, order.order_id);
+	database::verify_binding(rc1);
+
+	// Bind status
+	auto status = status_to_int(order.status);
+	auto rc2 = database::bind_int(order_stmth, 2, status);
+	database::verify_binding(rc2);	
+}
+void order_manager::bind_insert_detail_part(const std::string& order_id, const good& g, sqlite3_stmt* detail_stmth)
+{
+	// Bind order_id
+	auto rc1 = database::bind_text(detail_stmth, 1, order_id);
+	database::verify_binding(rc1);
+
+	// Bind item_id
+	auto& item_id = g.first;
+	auto rc2 = database::bind_text(detail_stmth, 2, item_id);
+	database::verify_binding(rc2);
+
+	// Bind quantity
+	auto& quantity = g.second;
+	auto rc3 = database::bind_int(detail_stmth, 3, quantity);
+	database::verify_binding(rc3);
+}
+
 
 // exist()
 bool order_manager::exist(const std::string& order_id)
 {
 	// Prepare statement
 	auto stmthandle = order_statement_generator::order_exist_stmt(get_database());
-	if (!stmthandle)
-	{
-		return false;
-	}
+	database::verify_stmt_handle(&stmthandle);	
 
 	// Bind SQL param
-	sqlite3_bind_text(*stmthandle, 1, order_id.c_str(), order_id.size(), nullptr);
+	auto rc = database::bind_text(*stmthandle, 1, order_id);
+	database::verify_binding(rc);
 
 	// Execute query
-	auto rc = step(*stmthandle);
-	if (rc != SQLITE_ROW)
+	rc = step(*stmthandle);
+	if (!database::step_has_result(rc))
 	{
 		throw warehouse_exception
 		{ 
-			"order_manager::exist(): step() failed to generate result!" 
+			"order_manager::exist(): query return empty!" 
 		};
 	}
 	
 	// Extract result
-	auto count = sqlite3_column_int(*stmthandle, 0);
+	auto count = database::extract_int(*stmthandle, 0);
 	switch (count)
 	{
 	case 0:		// No such order
@@ -99,7 +126,7 @@ bool order_manager::exist(const std::string& order_id)
 	}
 	return false;
 }
-//--------------------------------------
+
 
 // get_order() and its helper functions
 std::pair<bool, Order> order_manager::get_order(const std::string& order_id)
@@ -118,71 +145,40 @@ std::pair<bool, Order> order_manager::get_order(const std::string& order_id)
 
 	return std::make_pair(true, order);
 }
-
 void order_manager::get_order_part(Order& order)
 {
 	// Prepare statement
 	auto order_stmth
 		= order_statement_generator::query_order_stmt(get_database());
-	if (!order_stmth)
-	{
-		throw warehouse_exception
-		{ 
-			"order_manager::get_order(): failed to prepare statement_handle!" 
-		};
-	}
+	database::verify_stmt_handle(&order_stmth);
 
 	// Bind SQL param
 	const auto& order_id = order.order_id;
-	auto rc = sqlite3_bind_text(
-		*order_stmth, 1, 
-		order_id.c_str(), 
-		order_id.size(), 
-		nullptr
-		);
-	if (SQLITE_OK != rc)
-	{
-		throw warehouse_exception
-		{ 
-			"order_manager::get_order(): sqlite3_bind_text() failed!", 
-			rc 
-		};
-	}
+	auto rc = database::bind_text(*order_stmth, 1, order_id);
+	database::verify_binding(rc);
 
 	// Extract result
-	if (SQLITE_ROW != step(*order_stmth))
+	rc = step(*order_stmth);
+	if (!database::step_has_result(rc))
 	{
 		throw warehouse_exception
 		{
-			"order_manager::get_order(): sqlite3_step() failed!",
+			"order_manager::get_order(): query return empty!",
 			rc
 		};
 	}
 	extract_order_query(order, *order_stmth);
 }
-
 void order_manager::get_detail_part(Order& order)
 {
 	// Prepare statement
 	auto detail_stmth =
 		order_statement_generator::query_order_detail_stmt(get_database());
-
+	database::verify_stmt_handle(&detail_stmth);	
+	
 	// Bind SQL param
-	const auto& order_id = order.order_id;
-	auto rc =
-		sqlite3_bind_text(
-			*detail_stmth, 1, 
-			order_id.c_str(), 
-			order_id.size(), 
-			nullptr);
-	if (SQLITE_OK != rc)
-	{
-		throw warehouse_exception
-		{ 
-			"order_manager::get_order(): sqlite3_bind_text() failed!", 
-			rc
-		};
-	}
+	auto rc = database::bind_text(*detail_stmth, 1, order.order_id);
+	database::verify_binding(rc);
 
 	// Extract results
 	while ((rc = step(*detail_stmth)) == SQLITE_ROW)
@@ -197,77 +193,202 @@ void order_manager::get_detail_part(Order& order)
 		};
 	}
 }
-
 void order_manager::extract_order_query(Order& order, sqlite3_stmt* stmthandle)
 {
 	// order_id
-	auto ustr_id = ustring{ sqlite3_column_text(stmthandle, 0) };
-	order.order_id = std::string{ ustr_id.begin(), ustr_id.end() };
+	order.order_id = database::extract_text(stmthandle, 0);
 
 	// Status
-	auto int_status = sqlite3_column_int(stmthandle, 1);
+	auto int_status = database::extract_int(stmthandle, 1);
 	order.status = int_to_status(int_status);
 }
-
 void order_manager::extract_detail_query(Order& order, sqlite3_stmt* stmthandle)
 {
 	// item_id
-	auto item_id = (const char*)sqlite3_column_text(stmthandle, 0);
+	auto item_id = database::extract_text(stmthandle, 0);
 
 	// quantity
-	auto quantity = sqlite3_column_int(stmthandle, 1);
+	auto quantity = database::extract_int(stmthandle, 1);
 
 	// Add to goods
 	order.goods.emplace_back(item_id, quantity);
 }
 
-void order_manager::bind_insert_order_part(const Order& order, sqlite3_stmt* order_stmth)
+// add_refund_order() and its helper functions
+bool order_manager::add_refund_order(const Refund_Order& ro)
 {
-	// Bind order_id
-	auto order_id = order.order_id.c_str();
-	auto rc1
-		= sqlite3_bind_text(order_stmth, 1, order_id, order.order_id.size(), nullptr);
-
-	// Bind status
-	auto status = status_to_int(order.status);
-	auto rc2 = sqlite3_bind_int(order_stmth, 2, status);
-
-	// Validate result
-	if (rc1 != SQLITE_OK
-		|| rc2 != SQLITE_OK)
+	// Validate order
+	// Check order existence, return false if the order doesn't exist
+	if (!exist(ro.order_id))
 	{
-		throw warehouse_exception
-		{
-			"order_manager::bind_insert_order(): bind failed!"
-		};
+		return false;
 	}
-}
+	// Check order status, return false if status isn't Refunded
+	else
+	{
+		auto c = check_status(ro.order_id);
+		if (!c.first
+			|| c.second != Order_Status_Type::Refunded)
+		{
+			return false;
+		}
+	}
 
-void order_manager::bind_insert_detail_part(const std::string& order_id, const good& g, sqlite3_stmt* detail_stmth)
+	// TO BE ADDED: Validate refunds
+	// refunded <= ordered
+	// use get_refund_order()
+
+	// Execute refunds insertion
+	if (ro.refund_goods.empty())
+	{
+		return false;
+	}
+	for (const auto& rg : ro.refund_goods)
+	{
+		// Prepare SQL
+		auto stmthandle
+			= order_statement_generator::insert_refund_order_stmt(get_database());
+		database::verify_stmt_handle(&stmthandle);
+
+		// Bind SQL params
+		bind_insert_refund(ro.order_id, rg, *stmthandle);
+		
+		// step
+		if (SQLITE_DONE != step(*stmthandle))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+void order_manager::bind_insert_refund(const std::string & order_id, const good& g, sqlite3_stmt* stmthandle)
 {
 	// Bind order_id
-	auto rc1
-		= sqlite3_bind_text(detail_stmth, 1, order_id.c_str(), order_id.size(), nullptr);
+	auto rc0 = database::bind_text(stmthandle, 1, order_id);
+	database::verify_binding(rc0);
 
 	// Bind item_id
-	auto& item_id = g.first;
-	auto rc2
-		= sqlite3_bind_text(detail_stmth, 2, item_id.c_str(), item_id.size(), nullptr);
+	const auto& item_id = g.first;
+	auto rc1 = database::bind_text(stmthandle, 2, item_id);
+	database::verify_binding(rc1);
 
 	// Bind quantity
-	auto& quantity = g.second;
-	auto rc3
-		= sqlite3_bind_int(detail_stmth, 3, quantity);
+	const auto& quantity = g.second;
+	auto rc2 = database::bind_int(stmthandle, 3, quantity);
+	database::verify_binding(rc2);	
+}
 
-	// Validate result
-	if (rc1 != SQLITE_OK
-		|| rc2 != SQLITE_OK
-		|| rc3 != SQLITE_OK)
+
+// status()
+std::pair<bool, Order_Status_Type> order_manager::check_status(const std::string& order_id)
+{
+	// Validate order
+	if (!exist(order_id))
+	{
+		return std::make_pair(false, Order_Status_Type::Invalid);
+	}
+
+	// Prepare SQL
+	auto stmthandle 
+		= order_statement_generator::query_order_status_stmt(get_database());
+	database::verify_stmt_handle(&stmthandle);
+
+	// Bind SQL param
+	auto rc = database::bind_text(*stmthandle, 1, order_id);
+	database::verify_binding(rc);
+	
+	// Query
+	rc = step(*stmthandle);
+	database::verify_steping(rc);
+	if (!database::step_has_result(rc))
 	{
 		throw warehouse_exception
 		{
-			"order_manager::bind_insert_order(): bind failed!" 
+			"order_manager::check_status(): query return empty!"
+		};
+	}
+
+	// Extract
+	auto status_int = database::extract_int(*stmthandle, 0);
+	auto status = int_to_status(status_int);
+	return std::make_pair(true, status);
+}
+bool order_manager::update_status(const std::string& order_id, const Order_Status_Type nstatus)
+{
+	// Validate order
+	if (!exist(order_id))
+	{
+		return false;
+	}
+
+	// Prepare SQL
+	auto stmthandle 
+		= order_statement_generator::update_status_stmt(get_database());
+	database::verify_stmt_handle(&stmthandle);
+
+	// Bind SQL param:
+	// Bind status
+	auto s = status_to_int(nstatus);
+	auto rc = database::bind_int(*stmthandle, 1, s);
+	database::verify_binding(rc);
+
+	// Bind order_id
+	rc = database::bind_text(*stmthandle, 2, order_id);
+	database::verify_binding(rc);
+
+	// Step
+	rc = database::step(*stmthandle);
+	database::verify_steping(rc);
+	
+	return true;
+}
+
+
+// get_refund_order() and its helper functions
+std::pair<bool, Refund_Order> order_manager::get_refund_order(const std::string& order_id)
+{
+	// Validate the order: existence and status
+	if (!exist(order_id))		
+	{
+		return std::make_pair(false, Refund_Order{});
+	}
+	else if (Order_Status_Type::Refunded != check_status(order_id).second)
+	{
+		return std::make_pair(false, Refund_Order{});
+	}
+	else
+	{
+		// the order is validated
+	}
+
+	// Prepare SQL
+	auto stmthandle = order_statement_generator::query_refund_order_stmt(get_database());
+	database::verify_stmt_handle(&stmthandle);
+
+	// Bind SQL param
+	auto rc = database::bind_text(*stmthandle, 1, order_id);
+	database::verify_binding(rc);
+		
+	// Extract the query
+	auto refund_order = Refund_Order{ order_id };
+	extract_refund_query(refund_order, *stmthandle);
+
+	return std::make_pair(true, refund_order);
+}
+void order_manager::extract_refund_query(Refund_Order& refund_order, sqlite3_stmt* stmthandle)
+{
+	while (SQLITE_ROW == database::step(stmthandle))
+	{
+		auto item_id = database::extract_text(stmthandle, 0);
+		auto refund_quantity = database::extract_int(stmthandle, 1);
+		auto g = good{ item_id, refund_quantity };
+		refund_order.refund_goods.push_back(g);
+	}
+	if (refund_order.refund_goods.empty())
+	{
+		throw warehouse_exception
+		{
+			"order_manager::extract_refund_query(): query return empty!"
 		};
 	}
 }
-//--------------------------------------
