@@ -161,6 +161,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="database.hpp" />
+    <ClInclude Include="job.hpp" />
     <ClInclude Include="personnel.hpp" />
     <ClInclude Include="personnel_manager.hpp" />
     <ClInclude Include="warehouse.hpp" />
