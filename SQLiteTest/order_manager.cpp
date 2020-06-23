@@ -1,6 +1,6 @@
 #include "order_manager.hpp"
 
-using namespace warehouse;
+using namespace WarehouseManage;
 
 // Schemas:
 // orders			(order_id TEXT, status	INTEGER)
@@ -91,7 +91,6 @@ void order_manager::bind_insert_detail_part(const std::string& order_id, const g
 	database::verify_binding(rc3);
 }
 
-
 // exist()
 bool order_manager::exist(const std::string& order_id)
 {
@@ -131,7 +130,6 @@ bool order_manager::exist(const std::string& order_id)
 	}
 	return false;
 }
-
 
 // get_order() and its helper functions
 std::pair<bool, Order> order_manager::get_order(const std::string& order_id)
@@ -283,7 +281,6 @@ void order_manager::bind_insert_refund(const std::string & order_id, const good&
 	database::verify_binding(rc2);	
 }
 
-
 // status()
 std::pair<bool, Order_Status_Type> order_manager::check_status(const std::string& order_id)
 {
@@ -348,7 +345,6 @@ bool order_manager::update_status(const std::string& order_id, const Order_Statu
 	return true;
 }
 
-
 // get_refund_order() and its helper functions
 std::pair<bool, Refund_Order> order_manager::get_refund_order(const std::string& order_id)
 {
@@ -396,4 +392,26 @@ void order_manager::extract_refund_query(Refund_Order& refund_order, sqlite3_stm
 			"order_manager::extract_refund_query(): query return empty!"
 		};
 	}
+}
+
+int order_manager::order_count()
+{
+	// Prepare SQL
+	auto stmthandle = order_statement_generator::count_order_stmt(get_database());
+	database::verify_stmt_handle(stmthandle);
+
+	// Execute SQL
+	auto rc = database::step(*stmthandle);
+	database::verify_steping(rc);
+	if (!database::step_has_result(rc))
+	{
+		throw warehouse_exception
+		{
+			"order_manager::order_count(): query return empty!"
+		};
+	}
+
+	// Extract result
+	auto count = database::extract_int(*stmthandle, 0);
+	return count;
 }

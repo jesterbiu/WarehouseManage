@@ -6,8 +6,8 @@
 using namespace Tests;
 
 // Test options
-#define TEST_ITEM TRUE
-#define TEST_ORDER FALSE
+#define TEST_ITEM 0
+#define TEST_ORDER 1
 
 int main()
 {

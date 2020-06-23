@@ -153,12 +153,17 @@
     <ClCompile Include="item_manager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="order_manager.cpp" />
+    <ClCompile Include="personnel_manager.cpp" />
     <ClCompile Include="sqlite3.c" />
     <ClCompile Include="storage.cpp" />
+    <ClCompile Include="warehouse.cpp" />
     <ClCompile Include="warehouse_exception.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="database.hpp" />
+    <ClInclude Include="personnel.hpp" />
+    <ClInclude Include="personnel_manager.hpp" />
+    <ClInclude Include="warehouse.hpp" />
     <ClInclude Include="warehouse_exception.hpp" />
     <ClInclude Include="item.hpp" />
     <ClInclude Include="item_manager.hpp" />

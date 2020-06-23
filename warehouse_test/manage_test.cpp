@@ -1,15 +1,14 @@
 #include "manage_test.hpp"
-using namespace warehouse;
+using namespace WarehouseManage;
 // Debug options
-#define ADD_ITEM 1
-#define EXIST 1
-#define FIND_ITEM 1
-#define CHECK_LOCATION 1
-#define UPDATE_STOCKS 1
-
+#define ADD_ITEM        1
+#define EXIST           1
+#define FIND_ITEM       1
+#define CHECK_LOCATION  1
+#define UPDATE_STOCKS   1
+#define GET_ALL         1
 namespace Tests
-{
-	
+{	
 		void item_manager_test()
 		{
 			
@@ -82,7 +81,12 @@ namespace Tests
 
                 }// end of for
 #endif
-
+#if GET_ALL
+                auto count = (size_t)mp.item_count();
+                auto vig = std::vector<Item>{ count };
+                mp.get_all_items(vig.begin(), count);
+                
+#endif
                 item_manager_test_pt2(mp);
             }
             catch (warehouse_exception& expt)

@@ -6,7 +6,7 @@
 #include "item.hpp"
 #include "order.hpp"
 
-namespace warehouse
+namespace WarehouseManage
 {
 	// Located indicates that the table contains location of the item, NotLocated means not
 	enum class Item_File_Type { Located = 4, NotLocated = 2 };

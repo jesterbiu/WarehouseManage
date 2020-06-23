@@ -1,5 +1,5 @@
 #include "item_manager.hpp"
-using namespace warehouse;
+using namespace WarehouseManage;
 //item_manager::
 bool item_manager::add_item(const Item& pitem)
 {
@@ -263,4 +263,26 @@ Location item_manager::arrange_location()
 
 	// Return an invalid location if no available location found
 	return Location();
+}
+
+int item_manager::item_count()
+{
+	// Prepare SQL
+	auto stmthandle = item_statement_generator::count_item_stmt(get_database());
+	database::verify_stmt_handle(stmthandle);
+
+	// Execute SQL
+	auto rc = database::step(*stmthandle);
+	database::verify_steping(rc);
+	if (!database::step_has_result(rc))
+	{
+		throw warehouse_exception
+		{
+			"item_manager::item_count(): query return empty!"
+		};
+	}
+
+	// Extract result
+	auto count = database::extract_int(*stmthandle, 0);
+	return count;
 }

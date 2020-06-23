@@ -8,7 +8,7 @@
 #include "manager.hpp"
 #include "item.hpp"
 
-namespace warehouse {
+namespace WarehouseManage {
 class item_manager : public manager
 {	
 public:
@@ -47,6 +47,47 @@ public:
 	// Find and return the item if exists. Test pair.first to validate the return
 	std::pair<bool, Item> find_item(const std::string& id);
 	
+	// Return the total count of items
+	int item_count();
+
+	// Try to store all but max_count of items in the container 
+	// which the iter belongs to
+	template<typename InputIt>
+	void get_all_items(InputIt iter, size_t max_count)
+	{
+		// Validate input
+		if (max_count < 1)
+		{
+			return;
+		}
+
+		// Prepare SQL
+		auto stmth = item_statement_generator::select_all_stmt(get_database());
+		database::verify_stmt_handle(stmth);
+
+		// Execute
+		auto rc = database::step(*stmth);
+		database::verify_steping(rc);
+
+		// Extract	
+		auto i = 0;
+		while (database::step_has_result(rc) && i != max_count)
+		{			
+			// Extract current row
+			auto item = Item{};
+			extract_query(item, *stmth);
+			*iter = item;
+
+			// Try to fetch the next row
+			auto rc =database::step(*stmth);
+			database::verify_steping(rc);
+
+			// Increment
+			iter++;
+			i++;
+		}
+	}
+
 	// Check the location and return the item at the location if there is one.
 	std::pair<bool, Item> check_location(const Location& location);
 
@@ -85,6 +126,20 @@ private:
 		{
 			static auto sqlstmt =
 				"UPDATE items SET stocks = $stocks WHERE id = $id_";
+			return statement_handle{ sqlstmt, db };
+		}
+	
+		inline static statement_handle count_item_stmt(sqlite3* db)
+		{
+			static auto sqlstmt
+				= "SELECT COUNT(*) FROM items; ";
+			return statement_handle{ sqlstmt, db };
+		}
+
+		inline static statement_handle select_all_stmt(sqlite3* db)
+		{
+			static auto sqlstmt
+				= "SELECT * FROM items; ";
 			return statement_handle{ sqlstmt, db };
 		}
 	};

@@ -1,7 +1,7 @@
 #include "storage.hpp"
 
 
-namespace warehouse 
+namespace WarehouseManage 
 {	
 	std::vector<std::string> split(const std::string& str, char spliter)
 	{

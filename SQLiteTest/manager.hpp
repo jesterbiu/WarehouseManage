@@ -1,7 +1,7 @@
 #pragma once
 #include "database.hpp"
 
-namespace warehouse
+namespace WarehouseManage
 {
 	class manager
 	{

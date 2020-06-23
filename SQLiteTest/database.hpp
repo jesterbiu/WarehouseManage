@@ -5,7 +5,7 @@
 #include "warehouse_exception.hpp"
 
 // warehouse database
-namespace warehouse {
+namespace WarehouseManage {
 
 	using ustring = std::basic_string<unsigned char>;
 

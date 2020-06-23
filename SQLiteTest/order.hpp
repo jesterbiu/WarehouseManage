@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace warehouse {
+namespace WarehouseManage {
 	enum class Order_Status_Type
 	{
 		Invalid,		// The order is not valid 

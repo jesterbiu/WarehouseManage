@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-namespace warehouse
+namespace WarehouseManage
 { 
 struct Location
 {

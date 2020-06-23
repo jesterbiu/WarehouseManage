@@ -1,7 +1,7 @@
 #include "order_test.hpp"
 
 
-using namespace warehouse;
+using namespace WarehouseManage;
 
 namespace Tests 
 {
@@ -49,6 +49,20 @@ namespace Tests
 				else return;
 			}
 			
+			// get_all_order_ids
+			auto count = (size_t)om.order_count();
+			auto vog = std::vector<std::string>{ count };
+			om.get_all_order_ids(vog.begin(), count);
+			for (int i = 0; i < vog.size(); i++)
+			{
+				auto& id = vog[i];
+				if (mo.find(id) == mo.end())
+				{
+					std::cout << "order_test: get_all_order_ids failed!";
+					return;
+				}
+			}
+
 			refund_order_test(mo, om);
 		}
 		catch (warehouse_exception& we)
@@ -56,7 +70,7 @@ namespace Tests
 			std::cout << we;
 		}
 	}
-	void refund_order_test(std::map<std::string, Order>& mo, warehouse::order_manager& om)
+	void refund_order_test(std::map<std::string, Order>& mo, WarehouseManage::order_manager& om)
 	{
 		for (auto& i : mo)
 		{
