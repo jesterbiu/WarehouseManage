@@ -97,17 +97,21 @@ namespace WarehouseManage {
 		// Binder
 		inline static int bind_text(sqlite3_stmt* stmt, int one_based_index, const std::string& text)
 			{
-				return sqlite3_bind_text(
+				auto rc = sqlite3_bind_text(
 					stmt,
 					one_based_index,
 					text.c_str(),
 					text.size(),
 					nullptr
 					);
+				verify_binding(rc);
+				return rc;
 			}
 		inline static int bind_int(sqlite3_stmt* stmt, int one_based_index, int value)
 			{
-				return sqlite3_bind_int(stmt, one_based_index, value);
+				auto rc = sqlite3_bind_int(stmt, one_based_index, value);
+				verify_binding(rc);
+				return rc;
 			}
 		
 		// Extractor
@@ -195,6 +199,7 @@ namespace WarehouseManage {
 		void create_item_table();
 		void create_order_table();
 		void create_refund_order_table();
+		void create_personnel_table();
 	};
 
 	

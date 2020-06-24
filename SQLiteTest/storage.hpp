@@ -5,6 +5,7 @@
 #include "warehouse_exception.hpp"
 #include "item.hpp"
 #include "order.hpp"
+#include "personnel.hpp"
 
 namespace WarehouseManage
 {
@@ -24,6 +25,8 @@ namespace WarehouseManage
 		static void read_item_table(const std::string& filename, std::vector<Item>& vi, Item_File_Type filetype);
 
 		static void read_order_table(const std::string& filename, std::map<std::string, Order>& vo);
+
+		static void read_pers_table(const std::string& filename, std::vector<Personnel>& vp);
 
 		template<typename ValType, typename FileType>
 		static void read_table(const std::string& filename, std::vector<Item>& vi, FileType filetype)

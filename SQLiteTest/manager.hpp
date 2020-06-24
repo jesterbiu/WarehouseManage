@@ -28,12 +28,17 @@ namespace WarehouseManage
 		{ 
 			return **db; 
 		}
-				
+		
+		// Verify that the step returns result not empty, else throw an exception
+		void step_has_result(int rc, const std::string& func_name);
+
 		// Includes functions generate statement_handle
-		struct statement_generator {};
+		struct statement_generator 
+		{
+			static statement_handle generate_stmt_handle(const char* sqlstmt, sqlite3* db);
+		};
 	
 	private:
-		database* db;
-		
+		database* db;		
 	};
 }

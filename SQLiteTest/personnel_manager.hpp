@@ -1,13 +1,9 @@
 #include <unordered_map>
 #include <queue>
-#include <deque>
-#include <ctime>
 #include "manager.hpp"
 #include "personnel.hpp"
 namespace WarehouseManage
 {
-	
-
 	class personnel_manager : public manager
 	{
 	public:
@@ -29,17 +25,42 @@ namespace WarehouseManage
 		}
 		~personnel_manager() {}
 	
-		bool add_personnel();
-		std::pair<bool, Personnel> check_personnel();
-		bool appoint();
-		bool perform();
+		// Add a new personnel into database
+		bool add_personnel(const Personnel&);
+		
+		// Find a personnel's info by id
+		std::pair<bool, Personnel> find_personnel(const std::string& persid);
+		
+		// Assign a job automatically using job_dispatch()
+		//bool assign(const Job&);
+
+		// Assign a job to a specific personnel
+		//bool assign(const Job&, const std::string& persid);
 
 	private:
 		struct personnel_statement_generator : public statement_generator
 		{
-
+			inline static statement_handle add_pers_stmt(sqlite3* db)
+			{
+				static auto sqlstmt 
+					= "INSERT INTO personnels(role, pers_id, password) VALUES($r, $pid, $pw)";
+				return generate_stmt_handle(sqlstmt, db);
+			}
+			inline static statement_handle find_pers_stmt(sqlite3* db)
+			{
+				static auto sqlstmt
+					= "SELECT * FROM personnels WHERE pers_id = $pid";
+				return generate_stmt_handle(sqlstmt, db);
+			}
 		};
-		//std::unordered_map<Personnel, std::queue<Job>> jobs;
-		//std::priority_queue<std::string, std::deque<Personnel>> pq;
+
+		void extract_personnel(sqlite3_stmt*, Personnel&);
+
+		class job_dispatcher
+		{
+			//std::unordered_map<Personnel, std::queue<Job>> jobs;
+			//std::priority_queue<std::string, std::deque<Personnel>> pq;
+		};
+		
 	};
 }

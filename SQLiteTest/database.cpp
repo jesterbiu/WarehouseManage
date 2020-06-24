@@ -46,6 +46,7 @@ database::database()
 	create_item_table();
 	create_order_table();
 	create_refund_order_table();
+	create_personnel_table();
 }
 
 void database::create_table(const char* sqlstmt)
@@ -88,4 +89,11 @@ void database::create_refund_order_table()
 	static const char sqlstmt_refund_orders[] =
 		"CREATE TABLE refund_orders (order_id TEXT, item_id TEXT, refund_quantity INTEGER)";
 	create_table(sqlstmt_refund_orders);
+}
+
+void database::create_personnel_table()
+{
+	static const char sqlstmt_personnels[] =
+		"CREATE TABLE personnels (role INTEGER, pers_id TEXT PRIMARY KEY, password TEXT)";
+	create_table(sqlstmt_personnels);
 }

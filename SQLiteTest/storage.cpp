@@ -31,6 +31,7 @@ namespace WarehouseManage
 		return vs;
 	}
 
+	// Read item
 	void storage::read_item_table(const std::string& filename, std::vector<Item>& vi, Item_File_Type filetype)
 	{
 		// Open file stream
@@ -67,7 +68,6 @@ namespace WarehouseManage
 		fs.close();
 
 	}
-
 	Item storage::extract_item(const std::vector<std::string>& vi, Item_File_Type filetype)
 	{
 		// Extract based on filetype
@@ -103,12 +103,8 @@ namespace WarehouseManage
 		// return an invalid item
 		return Item();
 	}
-
-	void get_order(std::ifstream& fs, Order& order, std::vector<Order>& vo)
-	{
-
-	}
-
+	
+	// Read order
 	void storage::read_order_table(const std::string& filename, std::map<std::string, Order>& vo)
 	{
 		// Open file stream
@@ -158,6 +154,81 @@ namespace WarehouseManage
 				vo[order_id].goods.push_back(g.second);
 			}
 
+		}
+
+		// Close stream
+		fs.close();
+	}
+	
+	// Read personne;
+	void storage::read_pers_table(const std::string& filename, std::vector<Personnel>& vp)
+	{
+		// Open file stream
+		std::ifstream fs(filename);
+		if (!fs.is_open())
+		{
+			throw warehouse_exception("read_order_table: failed to open file!");
+			return;
+		}
+
+		// Dispose the first line which is a comment
+		//auto line = std::string();
+		if (!fs.eof())
+		{
+			std::string s;
+			std::getline(fs, s);
+		}
+
+		// Read file
+		std::string line;
+		while (!fs.eof())
+		{
+			std::getline(fs, line);
+			auto cols = split(line, ',');		// Seperated columns by comma
+
+			// Validate every column
+			if (cols.empty())
+			{
+				continue;
+			}
+			else
+			{
+				bool empty_col = false;
+				for (auto& col : cols)
+				{
+					if (col.empty())
+					{
+						empty_col = true;
+						break;
+					}
+				}
+				if (empty_col) continue;
+			}
+
+			auto pers = Personnel{};
+			// Role			
+			switch (cols[0][0])
+			{
+			case 'A':
+				pers.role = Personnel_Role::Admin;
+				break;
+			case 'M':
+				pers.role = Personnel_Role::Manager;
+				break;
+			case 'P':
+				pers.role = Personnel_Role::Picker;
+				break;
+			default:
+				break;
+			}
+
+			// ID
+			pers.personnel_id = cols[1];
+
+			// Password
+			pers.password = cols[2];
+
+			vp.push_back(pers);		
 		}
 
 		// Close stream

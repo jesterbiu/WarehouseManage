@@ -3,70 +3,68 @@
 #include <tuple>
 #include <string>
 #include <type_traits>
-
-// item_id, quantity, location
-using good = std::tuple<int, int, std::string>;
-// item_id, location, expected count, actual count
-using inventory = std::tuple<int, std::string, int, int>;
-
-
-struct job
+#include "item.hpp"
+#define JOB_ 0
+#if JOB_
+// Public interface for jobs
+struct Job
 {
 	virtual void perform() = 0;
-	virtual ~job() {}
+	virtual ~Job() {}
 };
 
-struct select : public job
+// Picking_Job: pick a part of an order
+struct Picking_Info
 {
-	select(const good& g) : g(g) {}
+	// item_id, quantity, location
+	Picking_Info(const std::string& iid, int qty, const Location& loc) :
+		item_id(iid), quantity(qty), location(loc)
+	{}
+	std::string		item_id;
+	int				quantity;
+	Location		location;
+};
+struct Pikcing_Job : public Job
+{
+	Pikcing_Job(const Picking_Info& pinfo) : picking_info(pinfo) {}
 	void perform() override
 	{
-		std::cout << "select:\n"
-			<< "ID\tCount\tLocation\n"
-			<< std::get<0>(g) << "\t"
-			<< std::get<1>(g) << "\t"
-			<< std::get<2>(g) << "\n";
-		std::cout << "press key to confirm:";
-		system("pause");
-		system("cls");
+		
 	}
-	~select() {}
+	~Pikcing_Job() {}
 private:
-	good g;
+	Picking_Info picking_info;
 };
 
-struct stock : public job
+// Inventory_Job: do the inventory
+struct Inventory_Info
 {
-	stock(const inventory& in) : in(in) {}
+	// item_id, location, expected count, actual count
+	Inventory_Info(const std::string& iid, const Location loc, int expect, int actual) :
+		item_id(iid), location(loc),
+		expected_stock_count(expect), actual_stock_count(actual)
+	{}
+	std::string item_id;
+	Location location;
+	int expected_stock_count;
+	int actual_stock_count;
+};
+struct Inventory_Job : public Job
+{
+	Inventory_Job(const Inventory_Info& iinfo) : inventory_info(iinfo) {}
 	void perform() override
 	{
-		std::cout << "input actual stock:\n"
-			<< "ID\tLoc\tExp\tActual\n"
-			<< std::get<0>(in) << "\t"
-			<< std::get<1>(in) << "\t"
-			<< std::get<2>(in) << "\n";
-		std::cin >> std::get<3>(in);
-		system("cls");
 	}
-	~stock() {}
+	~Inventory_Job() {}
 private:
-	inventory in;
+	Inventory_Info inventory_info;
 };
 
-struct person
-{
-	person(job* j) : j(j) {}
-	void do_job()
-	{
-		j->perform();
-	}
-private:
-	job* j;
-};
-
+// Factory
 template<typename JobType, typename Arg>
-std::unique_ptr<job> generate_job(Arg& arg)
+std::unique_ptr<Job> generate_job(Arg& arg)
 {
-	static_assert(std::is_base_of<job, JobType>::value, "type parameter of this class must derive from job");
+	static_assert(std::is_base_of<Job, JobType>::value, "type parameter of this class must derive from job");
 	return std::make_unique<JobType>(arg);
 }
+#endif

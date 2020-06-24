@@ -5,7 +5,8 @@
 #include "item_manager.hpp"
 #include "order_manager.hpp"
 #include "personnel_manager.hpp"
-
+#define WAREHOUSE_ 0
+#if WAREHOUSE_
 
 namespace WarehouseManage
 {	
@@ -37,3 +38,4 @@ namespace WarehouseManage
 
 	
 }
+#endif

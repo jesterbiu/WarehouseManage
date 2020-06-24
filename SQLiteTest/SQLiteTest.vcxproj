@@ -152,6 +152,7 @@
     <ClCompile Include="database.cpp" />
     <ClCompile Include="item_manager.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="manager.cpp" />
     <ClCompile Include="order_manager.cpp" />
     <ClCompile Include="personnel_manager.cpp" />
     <ClCompile Include="sqlite3.c" />

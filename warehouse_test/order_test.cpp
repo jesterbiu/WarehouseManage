@@ -53,7 +53,7 @@ namespace Tests
 			auto count = (size_t)om.order_count();
 			auto vog = std::vector<std::string>{ count };
 			om.get_all_order_ids(vog.begin(), count);
-			for (int i = 0; i < vog.size(); i++)
+			for (size_t i = 0; i < vog.size(); i++)
 			{
 				auto& id = vog[i];
 				if (mo.find(id) == mo.end())
