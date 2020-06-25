@@ -6,10 +6,11 @@
 namespace WarehouseManage {
 	enum class Order_Status_Type
 	{
-		Invalid,		// The order is not valid 
-		PendForSelecting,	// The order just generated and goods are not selected
-		Selected,			// Goods in the order are selected from the warehouse
-		Refunded			// Refund is raised
+		Invalid,				// The order is not valid 
+		PendForVerification,	// The order just generated and pended for verification
+		PendForPicking,			// The order is verified and goods are not picked
+		Picked,					// Goods in the order are picked from the warehouse
+		Refunded				// Refund is raised
 	};
 	
 	inline int status_to_int(Order_Status_Type status)
@@ -18,12 +19,14 @@ namespace WarehouseManage {
 		{
 		case Order_Status_Type::Invalid:
 			return 0;
-		case Order_Status_Type::PendForSelecting:
+		case Order_Status_Type::PendForVerification:
 			return 1;
-		case Order_Status_Type::Selected:
+		case Order_Status_Type::PendForPicking:
 			return 2;
-		case Order_Status_Type::Refunded:
+		case Order_Status_Type::Picked:
 			return 3;
+		case Order_Status_Type::Refunded:
+			return 4;
 		default:
 			throw warehouse_exception("Unknown order status!");
 			break;
@@ -37,10 +40,12 @@ namespace WarehouseManage {
 		case 0:
 			return Order_Status_Type::Invalid;
 		case 1:
-			return Order_Status_Type::PendForSelecting;
+			return Order_Status_Type::PendForVerification;
 		case 2:
-			return Order_Status_Type::Selected;
+			return Order_Status_Type::PendForPicking;
 		case 3:
+			return Order_Status_Type::Picked;
+		case 4:
 			return Order_Status_Type::Refunded;
 		default:
 			throw warehouse_exception("Unknown order status!");
@@ -65,7 +70,7 @@ namespace WarehouseManage {
 		{
 			if (goods.size() > 0)
 			{
-				status = Order_Status_Type::PendForSelecting;
+				status = Order_Status_Type::PendForVerification;
 			}
 		}
 		template<typename Container>
@@ -74,7 +79,7 @@ namespace WarehouseManage {
 		{
 			if (goods.size() > 0)
 			{
-				status = Order_Status_Type::PendForSelecting;
+				status = Order_Status_Type::PendForVerification;
 			}
 		}
 		// Copy ctor

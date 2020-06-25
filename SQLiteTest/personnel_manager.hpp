@@ -2,6 +2,7 @@
 #include <queue>
 #include "manager.hpp"
 #include "personnel.hpp"
+#include "task.hpp"
 namespace WarehouseManage
 {
 	class personnel_manager : public manager

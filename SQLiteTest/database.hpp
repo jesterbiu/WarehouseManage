@@ -1,7 +1,7 @@
 #pragma once
 #include <tuple>
 #include <iostream>
-#include "sqlite3.h"
+#include "..\SQLite3\sqlite3.h"
 #include "warehouse_exception.hpp"
 
 // warehouse database

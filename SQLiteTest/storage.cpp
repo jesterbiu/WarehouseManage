@@ -140,7 +140,7 @@ namespace WarehouseManage
 			{
 				order_id = vs[0];
 				vo.emplace(order_id, Order{ order_id });
-				vo[order_id].status = Order_Status_Type::PendForSelecting;
+				vo[order_id].status = Order_Status_Type::PendForVerification;
 			}
 
 			// Continue to extract a good's info

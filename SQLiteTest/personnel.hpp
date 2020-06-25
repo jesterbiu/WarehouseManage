@@ -1,6 +1,5 @@
 #pragma once
 #include <string>
-#include "job.hpp"
 
 namespace WarehouseManage
 {	

@@ -92,7 +92,7 @@ public:
 	std::pair<bool, Item> check_location(const Location& location);
 
 	// Update an item's stocks to currstock given its id
-	bool update_stocks(const std::string& id, int currstock);
+	bool update_stocks(const std::string& id, int updated_stock);
 
 private:		
 	struct item_statement_generator : public statement_generator
