@@ -2,21 +2,20 @@
 #include <iostream>
 #include <tuple>
 #include <string>
-#include <type_traits>
-#include "item.hpp"
-#define JOB_ 1
-#if JOB_
+#include "warehouse.hpp"
+#define TASK_ 1
+#if TASK_
 namespace WarehouseManage
 {
 	// Public interface for jobs
 	struct Task
 	{
 		virtual ~Task() {}
-		virtual void perform() = 0;
+	protected:
+		warehouse* pwh;
 	};
 
 	// Picking_Job: pick a part of an order
-
 	struct Picking_Info
 	{
 		// item_id, quantity, location
@@ -27,14 +26,14 @@ namespace WarehouseManage
 		int				quantity;
 		Location		location;
 	};
-
-	struct Pikcing_Job : public Task
+	struct Pikcing_Task : public Task
 	{
-		Pikcing_Job(const Picking_Info& pinfo) : picking_info(pinfo) {}
-		void perform() override;
-		~Pikcing_Job() {}
-	private:
-		Picking_Info picking_info;
+		template<typename Container>
+		Pikcing_Task(const Container& infos) :
+			picking_infos(infos.begin(), infos.end())
+		{}
+		~Pikcing_Task() {}
+		std::vector<Picking_Info> picking_infos;
 	};
 
 	// Inventory_Job: do the inventory
@@ -50,22 +49,27 @@ namespace WarehouseManage
 		int expected_stock_count;
 		int actual_stock_count;
 	};
-	struct Inventory_Job : public Task
+	struct Inventory_Task : public Task
 	{
-		Inventory_Job(const Inventory_Info& iinfo) : inventory_info(iinfo) {}
-		void perform() override;
-		~Inventory_Job() {}
-	private:
-		Inventory_Info inventory_info;
+		template<typename Container>
+		Inventory_Task(const Container& infos) :
+			inventory_infos(infos.begin(), infos.end())
+		{}
+		~Inventory_Task() {}
+		std::vector<Inventory_Info> inventory_infos;
 	};
 
 	// Factory
-	template<typename JobType, typename Arg>
-	std::unique_ptr<Task> generate_job(Arg& arg)
+	template<typename TaskType, typename Arg>
+	std::unique_ptr<Task> generate_task(Arg& arg)
 	{
-		static_assert(std::is_base_of<Task, JobType>::value, "type parameter of this class must derive from job");
-		return std::make_unique<JobType>(arg);
+		// Restrict that the task type must derive from Task
+		static_assert
+		(
+			std::is_base_of<Task, TaskType>::value, 
+			"task type must derive from Task"
+		);
+		return std::make_unique<TaskType>(arg);
 	}
 }
-
 #endif

@@ -8,7 +8,8 @@
 #define WAREHOUSE_ 1
 #if WAREHOUSE_
 namespace WarehouseManage
-{	
+{		
+	// warehouse
 	class warehouse
 	{
 	public:

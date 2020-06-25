@@ -63,3 +63,39 @@ std::pair<bool, Personnel> personnel_manager::find_personnel(const std::string& 
 
 	return std::make_pair(true, pers);
 }
+
+bool personnel_manager::task_dispatcher::add_personnel(const std::string& pers_id)
+{
+	auto rt = tasks.try_emplace(pers_id, std::queue<Task>{});
+	return rt.second;
+}
+bool personnel_manager::task_dispatcher::assign(const Task& task)
+{
+	// Select a personnel to assign to
+	auto p = next_personnel();
+	if (p.empty()) { return false; }
+
+	return assign(task, p);
+}
+bool personnel_manager::task_dispatcher::assign(const Task& task, const std::string& pers_id)
+{
+	// Check if the personnel is registered before assignment
+	if (tasks.find(pers_id) == tasks.end())
+	{
+		return false;
+	}
+	tasks[pers_id].push(task);
+	return true;
+}
+const Task_Queue personnel_manager::task_dispatcher::check_task(const std::string& pers_id)
+{
+	// Retrun Task_Queue if the personnel is registered
+	if (tasks.find(pers_id) != tasks.end())
+	{
+		return &(tasks[pers_id]);
+	}
+	else
+	{
+		return nullptr;
+	}
+}

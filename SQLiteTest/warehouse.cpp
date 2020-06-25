@@ -53,6 +53,25 @@ std::pair<bool, std::string> warehouse::pick(const Order& order)
 		}		
 	}
 
-	// Generate job for pickers
+	// Generate picking list
+	auto picklist = std::vector<Picking_Info>{};
+	for (auto& g : order.goods)
+	{		
+		
+		auto& item_id = g.first;	
 
+		auto qty = g.second;
+
+		// Get item's location
+		auto rt = imng->find_item(item_id);
+		if (!rt.first) { return std::make_pair(false, "failed to find item!"); }
+		auto location = rt.second.location;		
+		
+		// Store info
+		picklist.emplace_back(Picking_Info{ item_id, qty, location });
+	}
+
+	// Generate task
+	auto picktask = generate_task<Pikcing_Task>(picklist);
+	pmng->assign(std::move(picktask));
 }
