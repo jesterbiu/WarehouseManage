@@ -72,6 +72,47 @@ std::pair<bool, std::string> warehouse::pick(const Order& order)
 	}
 
 	// Generate task
-	auto picktask = generate_task<Pikcing_Task>(picklist);
-	pmng->assign(std::move(picktask));
+	auto picktask = std::make_unique<Picking_Task>(order.order_id, picklist);
+	return pmng->assign(std::move(picktask));	
+}
+std::vector<const Task*> warehouse::fetch_task_queue(const std::string& pers_id)
+{
+	auto vpt = std::vector<const Task*>{};
+	if (pmng->find_personnel(pers_id).first == false)
+	{
+		return vpt;
+	}
+	 auto ptq = pmng->fetch_task_queue(pers_id);
+	 for (auto& upt : *ptq)
+	 {
+		 const auto pt = upt.get();
+		 vpt.push_back(pt);
+	 }
+	 return vpt;
+}
+void warehouse::finish_task(const std::string& pers_id, Task* pt)
+{
+	pmng->finish_task(pers_id, pt);
+	switch (pt->tell_task_type())
+	{
+	case Task_Type::Picking_Type:
+	{	
+		auto pick = dynamic_cast<Picking_Task*>(pt);
+		finish_picking_task(pick);
+		return;
+	}
+	case Task_Type::Inventory_Type:
+	{	
+		auto invt = dynamic_cast<Inventory_Task*>(pt);
+		//finish_inventory_task(invt);
+		return;
+	}
+	default:
+		break;
+	} // end of switch
+}
+void warehouse::finish_picking_task(Picking_Task* task)
+{
+	auto& order_id = task->order_id;
+	omng->update_status(order_id, Order_Status_Type::Picked);
 }

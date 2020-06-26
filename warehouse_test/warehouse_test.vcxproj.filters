@@ -24,6 +24,9 @@
     <ClInclude Include="pers_test.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="warehouse_test.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="order_test.cpp">
@@ -36,6 +39,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pers_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="warehouse_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

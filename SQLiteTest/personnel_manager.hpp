@@ -6,7 +6,9 @@
 #include "task.hpp"
 namespace WarehouseManage
 {
-	using Task_Queue = std::queue<Task>*;
+	using Task_Queue = std::deque<std::unique_ptr<Task>>;
+	using PersID_Task_Map = std::unordered_map<std::string, std::deque<std::unique_ptr<Task>>>;
+
 	class personnel_manager : public manager
 	{
 	public:
@@ -17,38 +19,39 @@ namespace WarehouseManage
 		personnel_manager(database* pdb) : 
 			manager(pdb)
 		{
-			tasker = std::make_unique<task_dispatcher>();
+			tasker = std::make_shared<task_dispatcher>();
 		}
 		// Copy ctor
-		personnel_manager(const personnel_manager& oth) : 
-			manager(oth) 
-		{
-			tasker = std::make_unique<task_dispatcher>(oth.tasker);
-		}
+		personnel_manager(const personnel_manager& oth) = delete;
 		// Assignment operator
-		personnel_manager& operator =(const personnel_manager& oth)
-		{
-			if (this != &oth)
-			{
-				manager::operator=(oth);
-				tasker = std::make_unique<task_dispatcher>(oth.tasker);
-			}
-			return *this;
-		}
+		personnel_manager& operator =(const personnel_manager& oth) = delete;		
 		~personnel_manager() {}
 	
+
 		// Add a new personnel into database
 		bool add_personnel(const Personnel&);
-		
 		// Find a personnel's info by id
-		std::pair<bool, Personnel> find_personnel(const std::string& persid);
-		
-		// 
+		std::pair<bool, Personnel> find_personnel(const std::string& persid);	
+		// Return the personnel's task queue
+		inline const Task_Queue* fetch_task_queue(const std::string& pers_id)
+		{
+			return tasker->fetch_task_queue(pers_id);
+		}
+		inline Task* fetch_task(const std::string& pers_id, const Task* pt)
+		{
+			return tasker->fetch_task(pers_id, pt);
+		}
+		inline void finish_task(const std::string& pers_id, Task* pt)
+		{
+			tasker->finish_task(pers_id, pt);
+		}
+		// Return a list of all registered personnel's info
 		std::vector<Personnel> personnel_list();
-
 		// Assign a job automatically using job_dispatch()
-		bool assign(std::unique_ptr<Task>&&);
-
+		std::pair<bool, std::string> assign(std::unique_ptr<Task>&& upt) 
+		{
+			return tasker->assign(std::move(upt));
+		}
 		// Assign a job to a specific personnel
 		bool assign(std::unique_ptr<Task>&&, const std::string& pers_id);
 
@@ -68,13 +71,10 @@ namespace WarehouseManage
 				return generate_stmt_handle(sqlstmt, db);
 			}
 		};
-
-		void extract_personnel(sqlite3_stmt*, Personnel&);
-
 		class task_dispatcher
-		{
-			using PersID_Task_Map = std::unordered_map<std::string, std::queue<std::unique_ptr<Task>>>;
+		{			
 			PersID_Task_Map tasks;
+			std::unordered_map<Task*, Task_Queue::iterator> proceeding_tasks;
 			std::string next_personnel()
 			{
 				static auto iter = tasks.begin();
@@ -84,7 +84,7 @@ namespace WarehouseManage
 				{
 					return std::string{};
 				}
-				
+
 				// Assign tasks equally
 				if (iter == tasks.end())
 				{
@@ -104,22 +104,29 @@ namespace WarehouseManage
 					add_personnel(p);
 				}
 			}
-			task_dispatcher(const task_dispatcher& oth) :
-				tasks(oth.tasks) {}
-			task_dispatcher& operator =(const task_dispatcher& rhs)
-			{
-				if (this != &rhs)
-				{
-					tasks = rhs.tasks;
-				}
-				return *this;
-			}
+			task_dispatcher(const task_dispatcher& oth) = delete;
+			task_dispatcher& operator =(const task_dispatcher& rhs) = delete;
 
 			bool add_personnel(const std::string&);
-			bool assign(std::unique_ptr<Task>&&);
+			std::pair<bool, std::string> assign(std::unique_ptr<Task>&&);
 			bool assign(std::unique_ptr<Task>&&, const std::string&);
-			const Task_Queue check_task(const std::string&);
+			inline Task_Queue* fetch_task_queue(const std::string& pers_id)
+			{
+				if (tasks.find(pers_id) == tasks.end())
+				{
+					return nullptr;
+				}
+				else
+				{
+					return &tasks[pers_id];
+				}				
+			}
+			Task* fetch_task(const std::string& pers_id, const Task* pt);
+			void finish_task(const std::string& pers_id, Task* pt);
 		};
-		std::unique_ptr<task_dispatcher> tasker;
+		std::shared_ptr<task_dispatcher> tasker;
+				
+		// find_personnel()'s helper function
+		void extract_personnel(sqlite3_stmt*, Personnel&);
 	};
 }

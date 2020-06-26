@@ -25,6 +25,7 @@ bool personnel_manager::add_personnel(const Personnel& pers)
 
 	// Execute
 	database::step(*stmthandle);
+	tasker->add_personnel(pers.personnel_id);
 	return true;
 }
 
@@ -66,36 +67,56 @@ std::pair<bool, Personnel> personnel_manager::find_personnel(const std::string& 
 
 bool personnel_manager::task_dispatcher::add_personnel(const std::string& pers_id)
 {
-	auto rt = tasks.try_emplace(pers_id, std::queue<Task>{});
+	auto rt = tasks.try_emplace(pers_id, std::deque<std::unique_ptr<Task>>{});
 	return rt.second;
 }
-bool personnel_manager::task_dispatcher::assign(const Task& task)
+std::pair<bool, std::string> personnel_manager::task_dispatcher::assign(std::unique_ptr<Task>&& task)
 {
 	// Select a personnel to assign to
 	auto p = next_personnel();
-	if (p.empty()) { return false; }
+	if (p.empty()) { return std::make_pair(false, std::string{}); }
 
-	return assign(task, p);
+	tasks[p].push_back(std::move(task));
+	return std::make_pair(true, p);
 }
-bool personnel_manager::task_dispatcher::assign(const Task& task, const std::string& pers_id)
+bool personnel_manager::task_dispatcher::assign(std::unique_ptr<Task>&& task, const std::string& pers_id)
 {
 	// Check if the personnel is registered before assignment
 	if (tasks.find(pers_id) == tasks.end())
 	{
 		return false;
 	}
-	tasks[pers_id].push(task);
+	tasks[pers_id].push_back(std::move(task));
 	return true;
 }
-const Task_Queue personnel_manager::task_dispatcher::check_task(const std::string& pers_id)
+Task* personnel_manager::task_dispatcher::fetch_task(const std::string& pers_id, const Task* pt)
 {
-	// Retrun Task_Queue if the personnel is registered
-	if (tasks.find(pers_id) != tasks.end())
-	{
-		return &(tasks[pers_id]);
-	}
-	else
+	if (tasks.find(pers_id) == tasks.end())
 	{
 		return nullptr;
+	}
+	// Find the task
+	for (auto beg = tasks[pers_id].begin(); beg != tasks[pers_id].end(); beg++)
+	{
+		if (beg->get() == pt)
+		{
+			// Record the task being selected
+			proceeding_tasks.emplace(beg->get(), beg);
+			return beg->get();
+		}
+	}
+	return nullptr;
+}
+void personnel_manager::task_dispatcher::finish_task(const std::string& pers_id, Task* pt)
+{
+	if (proceeding_tasks.find(pt) != proceeding_tasks.end())
+	{
+		auto it = proceeding_tasks[pt];
+
+		// Delete the task from proceeding task list
+		proceeding_tasks.erase(pt);
+
+		// Delete the task from personnel's task queue
+		tasks[pers_id].erase(it);
 	}
 }

@@ -157,6 +157,7 @@
     <ClCompile Include="order_manager.cpp" />
     <ClCompile Include="personnel_manager.cpp" />
     <ClCompile Include="storage.cpp" />
+    <ClCompile Include="ui.cpp" />
     <ClCompile Include="warehouse.cpp" />
     <ClCompile Include="warehouse_exception.cpp" />
   </ItemGroup>
@@ -165,6 +166,7 @@
     <ClInclude Include="task.hpp" />
     <ClInclude Include="personnel.hpp" />
     <ClInclude Include="personnel_manager.hpp" />
+    <ClInclude Include="ui.hpp" />
     <ClInclude Include="warehouse.hpp" />
     <ClInclude Include="warehouse_exception.hpp" />
     <ClInclude Include="item.hpp" />

@@ -13,7 +13,7 @@ namespace Tests
 		{
 			storage::read_pers_table(".\\Data\\pers_tab_1.csv", vp);
 			auto pdb = database::get_instance();
-			auto pers_mngr = personnel_manager(pdb);
+			personnel_manager pers_mngr(pdb);
 
 			for (auto& p : vp)
 			{
