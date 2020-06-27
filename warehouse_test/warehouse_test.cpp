@@ -1,4 +1,5 @@
 #include "warehouse_test.hpp"
+
 namespace Tests 
 {
 	using namespace WarehouseManage;
@@ -45,7 +46,7 @@ namespace Tests
 			// add
 			if (om->add_order(i.second))
 			{
-				std::cout << "ADDED ";
+				std::cout << "ADDED\n";
 			}
 			else return nullptr;
 		}
@@ -66,16 +67,39 @@ namespace Tests
 
 			if (pm->add_personnel(p))
 			{
-				std::cout << "ADDED ";
+				std::cout << "ADDED\n";
 			}
 			else return nullptr;
 		}
 
 		return pm;
 	}
-	void perform_picking(Picking_Task* pkt, const Order& order)
+	void perform_picking(std::istream& is, Picking_Task* pkt, const Order& order)
 	{
+		std::cout << "Picking order " << order.order_id << "\n";
+		std::cout << "Please input the last 6 character of item to confirm...\n";
+		std::cout << "item_id\t\t\t\t\tquantity\tconfirm\n";
+		auto idtail = std::make_unique<char[]>(7);
+		for (auto& g : order.goods)
+		{
+			auto& itemid = g.first;
+			std::cout << itemid << "\t" << g.second;
+			if (is.eof()) return;
+			is.get(idtail.get(), 7);
 
+			auto sz = itemid.size();
+			auto tail = itemid.substr(sz - 6);
+			if (std::string{ idtail.get() } == tail)
+			{
+				std::cout << "\t\tY\n";
+				continue;
+			}
+			else
+			{
+				std::cout << "bad input!\n";
+			}
+		}
+		std::cout << "all picked and confirmed\n";
 	}
 	void test_warehouse()
 	{
@@ -87,8 +111,11 @@ namespace Tests
 
 		// get an order
 		auto sz = w.omng->order_count();
-		auto ov = std::vector<Order>{ (size_t)sz };
-		auto& order = ov[0];
+		auto ov = std::vector<std::string>{ (size_t)sz };
+		w.omng->get_all_order_ids(ov.begin(), sz);// get order ids
+		auto got = w.omng->get_order(ov[0]);// get the first order
+		if (!got.first) return;
+		auto& order = got.second;
 
 		// record current item stocks
 		auto sv = std::vector<int>{};
@@ -110,9 +137,17 @@ namespace Tests
 		auto tq = w.fetch_task_queue(pers_id);
 		auto t = w.fetch_task(pers_id, tq[0]);
 
-		// perform picking task
+		// perform picking task		
 		auto pkt = dynamic_cast<Picking_Task*>(t);
-		perform_picking(pkt, order);
+		std::string all_tails_str;
+		for (auto& g : order.goods)
+		{
+			auto& id = g.first;
+			all_tails_str += id.substr(id.size() - 6);
+		}
+		std::stringbuf s(all_tails_str);
+		std::istream is(&s);
+		perform_picking(is, pkt, order);
 
 		// done
 		w.finish_task(pers_id, t);

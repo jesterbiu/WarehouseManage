@@ -91,25 +91,27 @@ std::vector<const Task*> warehouse::fetch_task_queue(const std::string& pers_id)
 	 return vpt;
 }
 void warehouse::finish_task(const std::string& pers_id, Task* pt)
-{
-	pmng->finish_task(pers_id, pt);
+{	
 	switch (pt->tell_task_type())
 	{
 	case Task_Type::Picking_Type:
 	{	
 		auto pick = dynamic_cast<Picking_Task*>(pt);
 		finish_picking_task(pick);
-		return;
+		break;
 	}
 	case Task_Type::Inventory_Type:
 	{	
 		auto invt = dynamic_cast<Inventory_Task*>(pt);
 		//finish_inventory_task(invt);
-		return;
+		break;
 	}
 	default:
 		break;
 	} // end of switch
+
+	// Delete task
+	pmng->finish_task(pers_id, pt);
 }
 void warehouse::finish_picking_task(Picking_Task* task)
 {
