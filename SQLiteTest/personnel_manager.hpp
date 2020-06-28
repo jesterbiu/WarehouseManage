@@ -47,13 +47,25 @@ namespace WarehouseManage
 		}
 		// Return a list of all registered personnel's info
 		std::vector<Personnel> personnel_list();
+		// Return the next available personnel
+		inline std::string next_avail_personnle()
+		{
+			return tasker->next_avail_personnel();
+		}
 		// Assign a job automatically using job_dispatch()
-		std::pair<bool, std::string> assign(std::unique_ptr<Task>&& upt) 
+		inline std::pair<bool, std::string> assign(std::unique_ptr<Task>&& upt) 
 		{
 			return tasker->assign(std::move(upt));
 		}
 		// Assign a job to a specific personnel
-		bool assign(std::unique_ptr<Task>&&, const std::string& pers_id);
+		inline bool assign(std::unique_ptr<Task>&& upt, const std::string& pers_id)
+		{
+			if (find_personnel(pers_id).first)
+			{
+				return tasker->assign(std::move(upt), pers_id);
+			}
+			return false;
+		}
 
 	private:
 		struct personnel_statement_generator : public statement_generator
@@ -75,7 +87,23 @@ namespace WarehouseManage
 		{			
 			PersID_Task_Map tasks;
 			std::unordered_map<Task*, Task_Queue::iterator> proceeding_tasks;
-			std::string next_personnel()
+			
+		public:
+			task_dispatcher() {}
+			task_dispatcher(const std::vector<std::string>& plist)
+			{
+				for (auto& p : plist)
+				{
+					add_personnel(p);
+				}
+			}
+			task_dispatcher(const task_dispatcher& oth) = delete;
+			task_dispatcher& operator =(const task_dispatcher& rhs) = delete;
+
+			// Add personnel to dispose given id
+			bool add_personnel(const std::string&);
+			// Return next available personnel. If there is none return empty string
+			std::string next_avail_personnel()
 			{
 				static auto iter = tasks.begin();
 
@@ -95,19 +123,6 @@ namespace WarehouseManage
 				return next_pers;
 
 			}
-		public:
-			task_dispatcher() {}
-			task_dispatcher(const std::vector<std::string>& plist)
-			{
-				for (auto& p : plist)
-				{
-					add_personnel(p);
-				}
-			}
-			task_dispatcher(const task_dispatcher& oth) = delete;
-			task_dispatcher& operator =(const task_dispatcher& rhs) = delete;
-
-			bool add_personnel(const std::string&);
 			std::pair<bool, std::string> assign(std::unique_ptr<Task>&&);
 			bool assign(std::unique_ptr<Task>&&, const std::string&);
 			inline Task_Queue* fetch_task_queue(const std::string& pers_id)

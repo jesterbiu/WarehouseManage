@@ -105,15 +105,15 @@ namespace Tests
 	{
 		// initialize
 		auto w = warehouse{};
-		w.imng = get_item_manager();
-		w.omng = get_order_manager();
-		w.pmng = get_personnel_manager();
+		w.item_mng = get_item_manager();
+		w.order_mng = get_order_manager();
+		w.personnel_mng = get_personnel_manager();
 
 		// get an order
-		auto sz = w.omng->order_count();
+		auto sz = w.order_mng->order_count();
 		auto ov = std::vector<std::string>{ (size_t)sz };
-		w.omng->get_all_order_ids(ov.begin(), sz);// get order ids
-		auto got = w.omng->get_order(ov[0]);// get the first order
+		w.order_mng->get_all_order_ids(ov.begin(), sz);// get order ids
+		auto got = w.order_mng->get_order(ov[0]);// get the first order
 		if (!got.first) return;
 		auto& order = got.second;
 
@@ -121,7 +121,7 @@ namespace Tests
 		auto sv = std::vector<int>{};
 		for (auto& g : order.goods)
 		{
-			auto s = w.imng->find_item(g.first);
+			auto s = w.item_mng->find_item(g.first);
 			if (!s.first) {
 				std::cout << "find_item failed!";  return;
 			}
@@ -161,7 +161,7 @@ namespace Tests
 			return;
 		}
 		// 2 verify order status
-		auto update_o = w.omng->check_status(order.order_id);
+		auto update_o = w.order_mng->check_status(order.order_id);
 		if (!update_o.first || update_o.second != Order_Status_Type::Picked)
 		{
 			std::cout << "order status update failed!\n";
@@ -170,7 +170,7 @@ namespace Tests
 		// 3 verify items
 		for (int i = 0; i != order.goods.size(); i++)
 		{
-			auto found = w.imng->find_item(order.goods[i].first);
+			auto found = w.item_mng->find_item(order.goods[i].first);
 			if (!found.first)
 			{
 				std::cout << "find_item() 2nd time failed\n";

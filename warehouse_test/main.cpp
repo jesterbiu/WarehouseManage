@@ -26,6 +26,7 @@ int main()
 	pers_test();
 #endif
 
+#if TEST_WAREHOUSE
 	test_warehouse();
-
+#endif
 }

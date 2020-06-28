@@ -74,6 +74,15 @@ namespace WarehouseManage
 			order_id(std::move(oth.order_id)),
 			picking_infos(std::move(oth.picking_infos))
 		{}
+		Picking_Task& operator =(const Picking_Task& rhs)
+		{
+			if (this != &rhs)
+			{
+				order_id = rhs.order_id;
+				picking_infos = rhs.picking_infos;
+			}
+			return *this;
+		}
 		~Picking_Task() {}
 		
 		Task_Type tell_task_type() override
@@ -99,9 +108,9 @@ namespace WarehouseManage
 		int actual_stock_count;
 
 		// item_id, location, expected count, actual count
-		Inventory_Info(const std::string& iid, const Location loc, int expect, int actual) :
+		Inventory_Info(const std::string& iid, const Location loc, int expect) :
 			item_id(iid), location(loc),
-			expected_stock_count(expect), actual_stock_count(actual)
+			expected_stock_count(expect), actual_stock_count(0)
 		{}
 		Inventory_Info(const Inventory_Info& oth) :
 			item_id(oth.item_id), location(oth.location),
@@ -144,6 +153,14 @@ namespace WarehouseManage
 		Inventory_Task(Inventory_Task&& oth) noexcept:
 			inventory_infos(std::move(oth.inventory_infos))
 		{}
+		Inventory_Task& operator =(const Inventory_Task& rhs)
+		{
+			if (this != &rhs)
+			{
+				inventory_infos = rhs.inventory_infos;
+			}
+			return *this;
+		}
 		~Inventory_Task() {}
 		
 		Task_Type tell_task_type() 

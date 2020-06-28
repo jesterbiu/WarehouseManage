@@ -15,7 +15,7 @@ std::pair<bool, std::string> warehouse::pick(const Order& order)
 	{
 		// Fetch item info
 		auto& item_id = g.first;
-		auto result = imng->find_item(item_id);
+		auto result = item_mng->find_item(item_id);
 		auto found = result.first;
 		auto ordered_item = result.second;
 		if (!found)
@@ -34,7 +34,7 @@ std::pair<bool, std::string> warehouse::pick(const Order& order)
 
 		// Update item stock
 		auto updated_stock = ordered_item.stocks - ordered_qty;
-		if (!imng->update_stocks(item_id, updated_stock))
+		if (!item_mng->update_stocks(item_id, updated_stock))
 		{			
 			throw warehouse_exception
 			{
@@ -43,7 +43,7 @@ std::pair<bool, std::string> warehouse::pick(const Order& order)
 		}
 
 		// Update order status
-		if (!omng->update_status(order.order_id, Order_Status_Type::PendForPicking))
+		if (!order_mng->update_status(order.order_id, Order_Status_Type::PendForPicking))
 		{
 			// NEED TO WITHDRAW ITEM STOCK UPDATE
 			throw warehouse_exception
@@ -63,7 +63,7 @@ std::pair<bool, std::string> warehouse::pick(const Order& order)
 		auto qty = g.second;
 
 		// Get item's location
-		auto rt = imng->find_item(item_id);
+		auto rt = item_mng->find_item(item_id);
 		if (!rt.first) { return std::make_pair(false, "failed to find item!"); }
 		auto location = rt.second.location;		
 		
@@ -73,16 +73,16 @@ std::pair<bool, std::string> warehouse::pick(const Order& order)
 
 	// Generate task
 	auto picktask = std::make_unique<Picking_Task>(order.order_id, picklist);
-	return pmng->assign(std::move(picktask));	
+	return personnel_mng->assign(std::move(picktask));	
 }
 std::vector<const Task*> warehouse::fetch_task_queue(const std::string& pers_id)
 {
 	auto vpt = std::vector<const Task*>{};
-	if (pmng->find_personnel(pers_id).first == false)
+	if (personnel_mng->find_personnel(pers_id).first == false)
 	{
 		return vpt;
 	}
-	 auto ptq = pmng->fetch_task_queue(pers_id);
+	 auto ptq = personnel_mng->fetch_task_queue(pers_id);
 	 for (auto& upt : *ptq)
 	 {
 		 const auto pt = upt.get();
@@ -103,7 +103,7 @@ void warehouse::finish_task(const std::string& pers_id, Task* pt)
 	case Task_Type::Inventory_Type:
 	{	
 		auto invt = dynamic_cast<Inventory_Task*>(pt);
-		//finish_inventory_task(invt);
+		finish_inventory_task(invt);
 		break;
 	}
 	default:
@@ -111,10 +111,11 @@ void warehouse::finish_task(const std::string& pers_id, Task* pt)
 	} // end of switch
 
 	// Delete task
-	pmng->finish_task(pers_id, pt);
+	personnel_mng->finish_task(pers_id, pt);
 }
+
 void warehouse::finish_picking_task(Picking_Task* task)
 {
 	auto& order_id = task->order_id;
-	omng->update_status(order_id, Order_Status_Type::Picked);
+	order_mng->update_status(order_id, Order_Status_Type::Picked);
 }

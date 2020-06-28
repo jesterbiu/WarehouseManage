@@ -73,7 +73,7 @@ bool personnel_manager::task_dispatcher::add_personnel(const std::string& pers_i
 std::pair<bool, std::string> personnel_manager::task_dispatcher::assign(std::unique_ptr<Task>&& task)
 {
 	// Select a personnel to assign to
-	auto p = next_personnel();
+	auto p = next_avail_personnel();
 	if (p.empty()) { return std::make_pair(false, std::string{}); }
 
 	tasks[p].push_back(std::move(task));

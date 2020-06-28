@@ -228,9 +228,6 @@ std::vector<Location> item_manager::get_unavail_locations()
 
 void item_manager::initialize_locations_avail()
 {
-	// shelf and slot designs
-	static const char shelves[] = { 'A', 'B', 'C', 'D' };
-	static const int slot_count = 12;
 
 	// Initialize all locations as available
 	for (auto s : shelves)						// ['A', 'D']

@@ -5,6 +5,8 @@
 #include <cstring>
 #include <map>
 #include <vector>
+#include <algorithm>
+#include <array>
 #include "manager.hpp"
 #include "item.hpp"
 
@@ -94,6 +96,14 @@ public:
 	// Update an item's stocks to currstock given its id
 	bool update_stocks(const std::string& id, int updated_stock);
 
+	// Return true if the given location is legal
+	bool verify_location(const Location& location)
+	{
+		auto s_sz = sizeof(shelves) / sizeof(shelves[0]);
+		return std::find(shelves, shelves + s_sz, location.shelf)
+			&& (0 < location.slot && location.slot <= slot_count);
+	}
+
 private:		
 	struct item_statement_generator : public statement_generator
 	{
@@ -155,6 +165,9 @@ private:
 	std::pair<bool, statement_handle> query_by_id(const std::string& id);
 
 	// Val = true if the location is available for storing an item
+	// shelf and slot designs
+	static constexpr const char shelves[] = { 'A', 'B', 'C', 'D' };
+	static const int slot_count = 12;
 	std::map<Location, bool> locations_avail;
 	const bool Available = true;
 	const bool Unavailable = false;
