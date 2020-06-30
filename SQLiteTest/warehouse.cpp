@@ -119,3 +119,22 @@ void warehouse::finish_picking_task(Picking_Task* task)
 	auto& order_id = task->order_id;
 	order_mng->update_status(order_id, Order_Status_Type::Picked);
 }
+
+// Return map of item whose actual stock is differ from the expected
+
+std::map<Inventory_Info, int> warehouse::Stock_Record::get_differences()
+{
+	std::map<Inventory_Info, int> mii{};
+	for (auto& i : inventory_task.inventory_infos)
+	{
+		// Ignore unchecked stock count
+		if (i.actual_stock_count < 0) { continue; }
+
+		// Get difference
+		if (i.actual_stock_count != i.expected_stock_count)
+		{
+			mii.emplace(i, i.actual_stock_count - i.expected_stock_count);
+		}
+	}
+	return mii;
+}

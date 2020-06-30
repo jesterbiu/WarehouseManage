@@ -5,7 +5,7 @@ using namespace WarehouseManage;
 bool personnel_manager::add_personnel(const Personnel& pers)
 {
 	// Validate input
-	if (!pers)
+	if (!pers || find_personnel(pers.personnel_id).first)
 	{
 		return false;
 	}

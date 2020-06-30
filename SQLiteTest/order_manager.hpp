@@ -82,6 +82,31 @@ namespace WarehouseManage
 			}
 		}
 		
+		// Fetch all orders of the given status using container.pushback()
+		template<typename Container>
+		void get_order_ids_by_status(Container& c, Order_Status_Type status)
+		{
+			// Prepare SQL
+			auto stmth = order_statement_generator::query_orders_by_status_stmt(get_database());
+			database::verify_stmt_handle(stmth);
+
+			// Execute
+			auto rc = database::step(*stmth);
+			database::verify_steping(rc);
+
+			// Extract	
+			while (database::step_has_result(rc))
+			{
+				// Extract order id				
+				auto id = database::extract_text(*stmth, 0);
+				c.pushback(id);
+
+				// Try to fetch the next row
+				auto rc = database::step(*stmth);
+				database::verify_steping(rc);
+			}
+		}
+
 		// Get order from database
 		std::pair<bool, Order> get_order(const std::string& order_id);
 		
@@ -127,6 +152,13 @@ namespace WarehouseManage
 			{
 				static const char sqlstmt[] =
 					"SELECT * FROM orders WHERE order_id = $oid";
+
+				return statement_handle{ sqlstmt, db };
+			}
+			inline static statement_handle query_orders_by_status_stmt(sqlite3* db)
+			{
+				static const char sqlstmt[] =
+					"SELECT order_id FROM orders WHERE status = $s";
 
 				return statement_handle{ sqlstmt, db };
 			}

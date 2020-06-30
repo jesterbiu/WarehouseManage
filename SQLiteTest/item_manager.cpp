@@ -4,7 +4,7 @@ using namespace WarehouseManage;
 bool item_manager::add_item(const Item& pitem)
 {
 	// Validate input item
-	if (!pitem) return false;
+	if (!pitem || exist(pitem.item_id)) return false;
 
 	// Prepare statement
 	auto stmthandle = item_statement_generator::insert_stmt(get_database());

@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
-#include <functional>
 #include <iostream>
+#include <algorithm>
 #include "storage.hpp"
 #include "item_manager.hpp"
 #include "order_manager.hpp"
@@ -36,7 +36,7 @@ namespace WarehouseManage
 		// Order picking
 	public:
 		// 生成任务 但不指定人员和时间执行
-		std::pair<bool, std::string> pick(const Order&);			
+		std::pair<bool, std::string> pick(const Order&);		
 		// Send the personnel's task queue to UI
 		std::vector<const Task*> fetch_task_queue(const std::string& pers_id);
 		// Return an operatable Task
@@ -61,6 +61,8 @@ namespace WarehouseManage
 				inventory_task(itask) {}
 			Stock_Record(const Stock_Record& oth) :
 				inventory_task(oth.inventory_task) {}
+			Stock_Record(Stock_Record&& oth) noexcept :
+				inventory_task(std::move(oth.inventory_task)) {}
 			Stock_Record& operator =(const Stock_Record& rhs)
 			{
 				if (this != &rhs)
@@ -68,19 +70,28 @@ namespace WarehouseManage
 					inventory_task = rhs.inventory_task;
 				}
 				return *this;
-			}			
+			}
+			Stock_Record& operator =(Stock_Record&& rhs) noexcept
+			{
+				inventory_task = std::move(rhs.inventory_task);
+				return *this;
+			}
+
+			// Return map of item whose actual stock is differ from the expected
+			std::map<Inventory_Info, int> get_differences();
 		};
 		
 		template<typename Container>
-		bool check_stock(const Container& locs)
+		std::pair<bool, std::string> check_inventory(const Container& locs)
 		{
 			auto pers_id = personnel_mng->next_avail_personnle();
-			if (pers_id.empty()) { return false; }
-			return check_stock(locs, pers_id);
+			if (pers_id.empty()) { return std::make_pair(false, std::string{}); }
+			return check_inventory(locs, pers_id);
 		}
-
+			
+	public:
 		template<typename Container>
-		bool check_stock(const Container& locs, const std::string& pers_id)
+		std::pair<bool, std::string> check_inventory(const Container& locs, const std::string& pers_id)
 		{
 			// Verify location type
 			static_assert
@@ -88,28 +99,37 @@ namespace WarehouseManage
 				std::is_same<Container::value_type, Location>::value,
 				"Container must store Locations!"
 			);
-			
-			// Generate task
-			auto invtask = std::make_unique<Inventory_Task>();
-			auto vii = std::vector<Inventory_Info>{};
+					
+			// Generate inventory_infos for the task
+			std::vector<Inventory_Info> vii{};
 			for (const auto& loc : locs)
 			{
 				// Verify location
-				if (!item_mng->verify_location(loc)) { return false; }
+				if (!item_mng->verify_location(loc)) 
+				{ return std::make_pair(false, std::string{}); }
 
 				// Get the location's item info
 				auto found = item_mng->check_location(loc);
-				if (!found.first) { return false; }
+				// Continue if no item stored at the location
+				if (!found.first) { continue; }
 				auto& item = found.second;
 				vii.emplace_back(Inventory_Info{ item.item_id, loc, item.stocks });
 			}
 
-			// assign
+			// Sort locations in ascending order
+			auto inventory_info_cmp = [](const Inventory_Info& ia, const Inventory_Info& ib)
+			{ 
+				return !(ia.location < ib.location); 
+			};
+			std::sort(vii.begin(), vii.end(), inventory_info_cmp);
+
+			// Assign
 			auto invtask = std::make_unique<Inventory_Task>(vii);
-			return personnel_mng->assign(std::move(invtask), pers_id);
+			auto assign_result = personnel_mng->assign(std::move(invtask), pers_id);
+			return std::make_pair(assign_result, pers_id);
 		}
 
-	public:
+	public:// change to private later
 		database* pdb;
 		std::unique_ptr<order_manager>		order_mng;
 		std::unique_ptr<item_manager>		item_mng;

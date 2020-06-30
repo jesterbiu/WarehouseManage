@@ -10,6 +10,7 @@ using namespace WarehouseManage;
 // add_order() and its helper functions
 bool order_manager::add_order(const Order& order)
 {
+	if (exist(order.order_id)) { return false; }
 	// Execute insertion
 	return insert_order_part(order) && insert_detail_part(order)
 		? true

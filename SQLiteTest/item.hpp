@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-
+#include <ostream>
 namespace WarehouseManage
 { 
 struct Location
@@ -64,7 +64,7 @@ struct Location
 	// Slot index
 	int slot;
 };
-
+std::ostream& operator <<(std::ostream& os, const Location& loc);
 struct Item
 {
 	// Default ctor
