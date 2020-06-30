@@ -43,8 +43,8 @@ namespace Tests
 		{
 			std::cout << ibeg->item_id << "\t" 
 				<< ibeg->location << "\t"
-				<< ibeg->expected_stock_count << "\t";
-			ibeg->actual_stock_count = *abeg;
+				<< ibeg->expected_stock_count << "\t\t"
+				<< (ibeg->actual_stock_count = *abeg) << "\n";
 			abeg++; ibeg++;			
 		}
 		return warehouse::Stock_Record{ *pit };
@@ -161,9 +161,12 @@ namespace Tests
 		auto pt = w.fetch_task(pers_id, tq[0]);
 
 		// generate actual stock
+		// acutal_stocks -> inventory_infos
+		auto pitask = dynamic_cast<Inventory_Task*>(pt);
 		std::vector<int> actual_stocks{};
-		for (auto& l : locs)
+		for (auto& i : pitask->inventory_infos)
 		{
+			auto l = i.location;
 			auto found = w.item_mng->check_location(l);
 			if (!found.first) { continue; }
 			if (0 == l.slot % 3)
@@ -181,20 +184,20 @@ namespace Tests
 		}
 				
 		// perform_inv
-		auto pitask = dynamic_cast<Inventory_Task*>(pt);
+		
 		auto sr = std::move(perform_inv(actual_stocks, pitask));
 		w.finish_task(pers_id, pt);
 
 		// check 
-		auto m = sr.get_differences();
-		auto loc_to_stock = [&locs, &actual_stocks](const Location& loc)
+		auto m = sr.get_differences();		
+		auto info_to_stock = [&actual_stocks, sr](const Inventory_Info& info) 
 		{
-			for (size_t i = 0; i < locs.size(); i++)
+			for (size_t i = 0; i < sr.inventory_task.inventory_infos.size(); i++)
 			{
-				if (locs[i] == loc)
+				if (sr.inventory_task.inventory_infos[i] == info)
 				{
 					return actual_stocks[i];
-				}
+				}				
 			}
 			return -1;
 		};
@@ -206,12 +209,13 @@ namespace Tests
 				<< item.location << "\t"
 				<< i.second << "\t";
 
-			auto stock = loc_to_stock(item.location);
+			auto stock = info_to_stock(item);
 			if (stock < 0) 
 			{ std::cout << "loc_to_stock() failed"; return; }
-			auto expected_diff = stock = item.expected_stock_count;
-			std::cout << (expected_diff == i.second ? "Y" : "N")
-				<< "\n";
+			auto expected_diff = stock - item.expected_stock_count;
+			if (expected_diff != i.second) 
+			{ std::cout << "expected_stock failed!"; return; }
+			std::cout << "Y\n";
 		}
 	}
 	std::unique_ptr<item_manager> get_item_manager()

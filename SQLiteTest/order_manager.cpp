@@ -107,10 +107,11 @@ bool order_manager::exist(const std::string& order_id)
 	rc = database::step(*stmthandle);
 	if (!database::step_has_result(rc))
 	{
-		throw warehouse_exception
-		{ 
-			"order_manager::exist(): query return empty!" 
-		};
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 	
 	// Extract result

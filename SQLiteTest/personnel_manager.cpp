@@ -56,7 +56,10 @@ std::pair<bool, Personnel> personnel_manager::find_personnel(const std::string& 
 
 	// Execute
 	auto rc = database::step(*stmthandle);
-	step_has_result(rc, "personnel_manager::find_personnel()");
+	if (!database::step_has_result(rc))
+	{
+		return std::make_pair(false, Personnel{});
+	}
 
 	// Extract
 	auto pers = Personnel{};

@@ -119,7 +119,7 @@ namespace WarehouseManage
 			// Sort locations in ascending order
 			auto inventory_info_cmp = [](const Inventory_Info& ia, const Inventory_Info& ib)
 			{ 
-				return !(ia.location < ib.location); 
+				return ia.location < ib.location; 
 			};
 			std::sort(vii.begin(), vii.end(), inventory_info_cmp);
 

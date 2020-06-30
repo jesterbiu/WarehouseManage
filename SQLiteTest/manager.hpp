@@ -29,9 +29,6 @@ namespace WarehouseManage
 			return **db; 
 		}
 		
-		// Verify that the step returns result not empty, else throw an exception
-		void step_has_result(int rc, const std::string& func_name);
-
 		// Includes functions generate statement_handle
 		struct statement_generator 
 		{
