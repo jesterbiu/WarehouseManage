@@ -33,10 +33,7 @@ namespace WarehouseManage
 			*/
 		}
 		
-		// Order picking
-	public:
-		// 生成任务 但不指定人员和时间执行
-		std::pair<bool, std::string> pick(const Order&);		
+	public:			
 		// Send the personnel's task queue to UI
 		std::vector<const Task*> fetch_task_queue(const std::string& pers_id);
 		// Return an operatable Task
@@ -48,9 +45,17 @@ namespace WarehouseManage
 		// Finish the task after the user performed
 		void finish_task(const std::string& pers_id, Task* pt);
 
-		void refund(const Refund_Order&);		
+		// Generate and assign an order-picking task
+		// Return true and the id of the worker assigned to if succeeds
+		// Return false and error message if fails
+		std::pair<bool, std::string> pick(const Order&);
 
-		// 生成任务，可以指定人员或时间执行
+		// Generate and assign a refund task
+		// Return true and the id of the worker assigned to if succeeds
+		// Return false and error message if fails
+		std::pair<bool, std::string> refund(const Refund_Order&);
+
+		// Contains a Inventory_Task record
 		struct Stock_Record
 		{
 			// Record a task a aux infos(maybe)
@@ -81,6 +86,9 @@ namespace WarehouseManage
 			std::map<Inventory_Info, int> get_differences();
 		};
 		
+		// Generate and assign a inventory-checking task
+		// Return true and the id of the worker assigned to if succeeds
+		// Return false and empty string if fails
 		template<typename Container>
 		std::pair<bool, std::string> check_inventory(const Container& locs)
 		{
@@ -88,8 +96,6 @@ namespace WarehouseManage
 			if (pers_id.empty()) { return std::make_pair(false, std::string{}); }
 			return check_inventory(locs, pers_id);
 		}
-			
-	public:
 		template<typename Container>
 		std::pair<bool, std::string> check_inventory(const Container& locs, const std::string& pers_id)
 		{
@@ -135,9 +141,18 @@ namespace WarehouseManage
 		std::unique_ptr<item_manager>		item_mng;
 		std::unique_ptr<personnel_manager>	personnel_mng;		
 		std::vector<Stock_Record>			srec_vec;
-		void finish_picking_task(Picking_Task* task);
-		// Generate inventory report
-		void finish_inventory_task(Inventory_Task* task)
+		
+		// Verify ordered goods and update their stocks
+		std::pair<bool, std::string> verify_ordered_goods(const Order& order);
+		// Generate and return the picking list of the order
+		std::vector<Item_Info> get_good_info_list(const std::vector<good>& goods);
+
+		// Verify refunded goods
+		std::pair<bool, std::string> verify_refunded_goods(const Order& order, const Refund_Order& rorder);
+
+		void finish_picking_task(Item_Task* task);
+		// Generate and store a stock_record
+		inline void finish_inventory_task(Inventory_Task* task)
 		{
 			srec_vec.emplace_back(Stock_Record{ *task });
 		}

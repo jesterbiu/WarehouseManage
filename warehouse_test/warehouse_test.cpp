@@ -4,7 +4,7 @@ namespace Tests
 {
 	using namespace WarehouseManage;
 	
-	void perform_picking(std::istream& is, Picking_Task* pkt, const Order& order)
+	void perform_picking(std::istream& is, Item_Task* pkt, const Order& order)
 	{
 		std::cout << "Picking order " << order.order_id << "\n";
 		std::cout << "Please input the last 6 character of item to confirm...\n";
@@ -91,7 +91,7 @@ namespace Tests
 		auto t = w.fetch_task(pers_id, tq[0]);
 
 		// perform picking task		
-		auto pkt = dynamic_cast<Picking_Task*>(t);
+		auto pkt = dynamic_cast<Item_Task*>(t);
 		std::string all_tails_str;
 		for (auto& g : order.goods)
 		{

@@ -1,80 +1,7 @@
 #include "warehouse.hpp"
 using namespace WarehouseManage;
 
-std::pair<bool, std::string> warehouse::pick(const Order& order)
-{
-	// Verify order
-	if (!order && order.status != Order_Status_Type::PendForVerification)
-	{
-		std::string errmsg = "order" + order.order_id + " is not ready to be picked!";
-		return std::make_pair(false, errmsg);
-	}
-
-	// Check stocks
-	for (auto& g : order.goods)
-	{
-		// Fetch item info
-		auto& item_id = g.first;
-		auto result = item_mng->find_item(item_id);
-		auto found = result.first;
-		auto ordered_item = result.second;
-		if (!found)
-		{
-			std::string errmsg = "item " + item_id + " does not exist!";
-			return std::make_pair(false, errmsg);
-		}
-
-		// Veirfy item stock
-		auto ordered_qty = g.second;
-		if (ordered_qty > ordered_item.stocks)
-		{
-			std::string errmsg = "ordered quantity exceeds current stock!";
-			return std::make_pair(false, errmsg);
-		}
-
-		// Update item stock
-		auto updated_stock = ordered_item.stocks - ordered_qty;
-		if (!item_mng->update_stocks(item_id, updated_stock))
-		{			
-			throw warehouse_exception
-			{
-				"failed to update item stocks!"
-			};
-		}
-
-		// Update order status
-		if (!order_mng->update_status(order.order_id, Order_Status_Type::PendForPicking))
-		{
-			// NEED TO WITHDRAW ITEM STOCK UPDATE
-			throw warehouse_exception
-			{ 
-				"failed to update order status!"
-			};
-		}		
-	}
-
-	// Generate picking list
-	auto picklist = std::vector<Picking_Info>{};
-	for (auto& g : order.goods)
-	{		
-		
-		auto& item_id = g.first;	
-
-		auto qty = g.second;
-
-		// Get item's location
-		auto rt = item_mng->find_item(item_id);
-		if (!rt.first) { return std::make_pair(false, "failed to find item!"); }
-		auto location = rt.second.location;		
-		
-		// Store info
-		picklist.emplace_back(Picking_Info{ item_id, qty, location });
-	}
-
-	// Generate task
-	auto picktask = std::make_unique<Picking_Task>(order.order_id, picklist);
-	return personnel_mng->assign(std::move(picktask));	
-}
+// Fetching and finishing tasks
 std::vector<const Task*> warehouse::fetch_task_queue(const std::string& pers_id)
 {
 	auto vpt = std::vector<const Task*>{};
@@ -96,7 +23,7 @@ void warehouse::finish_task(const std::string& pers_id, Task* pt)
 	{
 	case Task_Type::Picking_Type:
 	{	
-		auto pick = dynamic_cast<Picking_Task*>(pt);
+		auto pick = dynamic_cast<Item_Task*>(pt);
 		finish_picking_task(pick);
 		break;
 	}
@@ -113,14 +40,197 @@ void warehouse::finish_task(const std::string& pers_id, Task* pt)
 	// Delete task
 	personnel_mng->finish_task(pers_id, pt);
 }
-
-void warehouse::finish_picking_task(Picking_Task* task)
+void warehouse::finish_picking_task(Item_Task* task)
 {
 	auto& order_id = task->order_id;
 	order_mng->update_status(order_id, Order_Status_Type::Picked);
 }
 
-// Return map of item whose actual stock is differ from the expected
+// pick() and its helper functions
+std::pair<bool, std::string> warehouse::verify_ordered_goods(const Order& order)
+{
+	// Check stocks
+	for (auto& g : order.goods)
+	{
+		// Fetch item info
+		auto& item_id = g.first;
+		auto result = item_mng->find_item(item_id);
+		if (!result.first)
+		{
+			std::string errmsg = "item " + item_id + " does not exist!";
+			return std::make_pair(false, errmsg);
+		}
+
+		// Veirfy item stock
+		auto ordered_qty = g.second;
+		auto ordered_item = result.second;
+		if (ordered_qty > ordered_item.stocks)
+		{
+			std::string errmsg = "ordered quantity exceeds current stock!";
+			return std::make_pair(false, errmsg);
+		}
+
+		// Update item stock
+		auto updated_stock = ordered_item.stocks - ordered_qty;
+		if (!item_mng->update_stocks(item_id, updated_stock))
+		{
+			throw warehouse_exception
+			{
+				"failed to update item stocks!"
+			};
+		}		
+	} // end of for
+	return std::make_pair(true, std::string{});
+}
+std::vector<Item_Info> warehouse::get_good_info_list(const std::vector<good>& goods)
+{
+	auto picklist = std::vector<Item_Info>{};
+	for (auto& g : goods)
+	{
+
+		auto& item_id = g.first;
+
+		auto qty = g.second;
+
+		// Get item's location
+		auto rt = item_mng->find_item(item_id);
+		// Throw if the item is not found 
+		// since verify_ordered_goods() just checked that
+		if (!rt.first)  
+		{
+			throw warehouse_exception
+			{
+				"get_picking_list(): item not found!"
+			};
+		}
+		auto location = rt.second.location;
+
+		// Store info
+		picklist.emplace_back(Item_Info{ item_id, qty, location });
+	}
+	return picklist;
+}
+std::pair<bool, std::string> warehouse::pick(const Order& order)
+{
+	// Verify order
+	if (!order || order.status != Order_Status_Type::PendForVerification)
+	{
+		std::string errmsg = "order is not ready to be picked!";
+		return std::make_pair(false, errmsg);
+	}
+	else if (!order_mng->exist(order.order_id))
+	{
+		std::string errmsg = "order does not exist!";
+		return std::make_pair(false, errmsg);
+	}
+	else {}
+
+	// Verify ordered goods and update their stocks
+	auto rt = verify_ordered_goods(order);
+	if (!rt.first) { return rt; }
+	
+	// Update order status
+	if (!order_mng->update_status(order.order_id, Order_Status_Type::PendForPicking))
+	{
+		// NEED TO WITHDRAW ITEM STOCK UPDATE
+		throw warehouse_exception
+		{ 
+			"failed to update order status!"
+		};
+	}		
+	
+	// Generate picking list
+	auto picklist = std::move(get_good_info_list(order.goods));
+
+	// Generate task and assign
+	auto picktask = std::make_unique<Item_Task>
+		(order.order_id, picklist, Item_Type::ToBeShipped);
+	return personnel_mng->assign(std::move(picktask));	
+}
+
+// refund() and its helper functions
+std::pair<bool, std::string> warehouse::verify_refunded_goods(const Order& order, const Refund_Order& rorder)
+{
+	auto prev = order_mng->get_refund_order(order.order_id);
+	for (auto& g : rorder.refund_goods)
+	{
+		// Verify that the refunded good was in the order list
+		auto ordered = std::find(order.goods.begin(), order.goods.end(), g);
+		if (ordered == order.goods.end())
+		{
+			auto errmsg = "a refunded good wasn't in the order list!";
+			return std::make_pair(false, errmsg);
+		}
+
+		// Compare ordered quantity and refunded quantity
+		auto r_qty = g.second, 
+			prev_r_qty = 0,
+			ordered_qty = ordered->second;
+		// Get previous refunds if there is any
+		if (prev.first)
+		{
+			auto prev_refunded = prev.second.refund_goods;
+			auto prev_g = prev_refunded.begin();
+			while (prev_refunded.end() 
+				!= (prev_g = std::find(prev_g, prev_refunded.end(), g)))
+			{
+				prev_r_qty += prev_g->second;
+				prev_g++;
+			}
+		}
+		// Return false if refunded qty > ordered qty
+		if (prev_r_qty + r_qty > ordered_qty)
+		{
+			auto errmsg = "refunded quantity exceeds ordered quantity!";
+			return std::make_pair(false, errmsg);
+		}
+	} // end of for
+	return std::make_pair(true, std::string{});
+}
+std::pair<bool, std::string> warehouse::refund(const Refund_Order& rorder)
+{
+	// Validate the refund order
+	if (!rorder || !order_mng->exist(rorder.order_id))
+	{
+		auto errmsg = "invalid refund order!";
+		return std::make_pair(false, errmsg);
+	}
+
+	// Fetch the original order
+	auto found = order_mng->get_order(rorder.order_id);
+	if (!found.first) 
+	{ 
+		auto errmsg = "order does not exist!";
+		return std::make_pair(false, errmsg);
+	}
+	auto& order = found.second;
+
+	// Verify refunded goods
+	auto verified = verify_refunded_goods(order, rorder);
+	if (!verified.first) { return verified; }
+
+	// Update status
+	if (Order_Status_Type::Refunded != order_mng->check_status(order.order_id).second)
+	{
+		auto updated = order_mng->update_status(order.order_id, Order_Status_Type::Refunded);
+		if (!updated)
+		{
+			throw warehouse_exception
+			{
+				"refund(): update_status() failed!"
+			};
+		}
+	}
+
+	// Generate list for returning goods
+	auto refund_list = std::move(get_good_info_list(rorder.refund_goods));
+
+	// Generate task and assign
+	auto refund_task = std::make_unique<Item_Task>
+		(order.order_id, refund_list, Item_Type::Refunded);
+	return personnel_mng->assign(std::move(refund_task));
+}
+
 
 std::map<Inventory_Info, int> warehouse::Stock_Record::get_differences()
 {

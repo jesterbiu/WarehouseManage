@@ -7,7 +7,7 @@
 #if TASK_
 namespace WarehouseManage
 {
-	enum class Task_Type { Picking_Type, Inventory_Type };
+	enum class Task_Type { Picking_Type, Inventory_Type, Refunding_Type };
 
 	// Public interface for jobs
 	struct Task
@@ -16,8 +16,9 @@ namespace WarehouseManage
 		virtual ~Task() {}
 	};
 
-	// Picking_Job: pick a part of an order
-	struct Picking_Info
+	// Item task: store or extract a certain quantity of items from the warehouse
+	// given each item's stored location
+	struct Item_Info
 	{
 		// Fields
 		std::string		item_id;
@@ -26,70 +27,77 @@ namespace WarehouseManage
 
 		// Ctor
 		// item_id, quantity, location
-		Picking_Info(const std::string& iid, int qty, const Location& loc) :
+		Item_Info(const std::string& iid, int qty, const Location& loc) :
 			item_id(iid), quantity(qty), location(loc)
-		{}		
-		Picking_Info(const Picking_Info& oth) :
+		{}
+		Item_Info(const Item_Info& oth) :
 			item_id(oth.item_id),
 			quantity(oth.quantity),
 			location(oth.location)
 		{}
-		Picking_Info& operator =(const Picking_Info& oth)
+		Item_Info& operator =(const Item_Info& oth)
 		{
 			if (this != &oth)
 			{
 				item_id = oth.item_id;
 				quantity = oth.quantity;
-				location =oth.location;
+				location = oth.location;
 			}
 			return *this;
 		}
-			
+
 		// Operator ==
-		bool operator ==(const Picking_Info& oth) const
+		bool operator ==(const Item_Info& oth) const
 		{
 			return item_id == oth.item_id
 				&& quantity == oth.quantity
 				&& location == oth.location;
 		}
 
-	};
-	struct Picking_Task : public Task
+	};	
+	enum class Item_Type { ToBeShipped, NewArrival, Refunded };
+	struct Item_Task : public Task
 	{
 		// Fields
 		std::string order_id;
-		std::vector<Picking_Info> picking_infos;
+		std::vector<Item_Info> picking_infos;
+		Item_Type item_type;
 
 		// Ctor and dtor
 		template<typename Container>
-		Picking_Task(const std::string& oid, const Container& infos) :
+		Item_Task(const std::string& oid, const Container& infos, Item_Type itype) :
 			order_id(oid),
-			picking_infos(infos.begin(), infos.end())
+			picking_infos(infos.begin(), infos.end()),
+			item_type(itype)
 		{}
-		Picking_Task(const Picking_Task& oth) :
+		Item_Task(const Item_Task& oth) :
 			order_id(oth.order_id),
-			picking_infos(oth.picking_infos)
+			picking_infos(oth.picking_infos),
+			item_type(oth.item_type)
 		{}
-		Picking_Task(Picking_Task&& oth) noexcept:
+		Item_Task(Item_Task&& oth) noexcept:
 			order_id(std::move(oth.order_id)),
-			picking_infos(std::move(oth.picking_infos))
+			picking_infos(std::move(oth.picking_infos)),
+			item_type(oth.item_type)
 		{}
-		Picking_Task& operator =(const Picking_Task& rhs)
+		Item_Task& operator =(const Item_Task& rhs)
 		{
 			if (this != &rhs)
 			{
 				order_id = rhs.order_id;
 				picking_infos = rhs.picking_infos;
+				item_type = rhs.item_type;
 			}
 			return *this;
 		}
-		Picking_Task& operator =(Picking_Task&& rhs) noexcept
+		Item_Task& operator =(Item_Task&& rhs) noexcept
 		{
 			order_id = std::move(rhs.order_id);
 			picking_infos = std::move(rhs.picking_infos);
+			item_type = rhs.item_type;
 			return *this;
 		}
-		~Picking_Task() {}
+		~Item_Task() {}
 		
 		Task_Type tell_task_type() override
 		{
@@ -97,14 +105,14 @@ namespace WarehouseManage
 		}
 
 		// Operator ==
-		bool operator ==(const Picking_Task& oth) const
+		bool operator ==(const Item_Task& oth) const
 		{
 			return order_id == oth.order_id
 				&& picking_infos == oth.picking_infos;
 		}
 	};
 
-	// Inventory_Job: do the inventory
+	// Inventory_Task: do the inventory
 	struct Inventory_Info
 	{
 		// Fields
