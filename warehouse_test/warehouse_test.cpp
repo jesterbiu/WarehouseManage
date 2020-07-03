@@ -4,16 +4,31 @@ namespace Tests
 {
 	using namespace WarehouseManage;
 	
-	void perform_picking(std::istream& is, Item_Task* pkt, const Order& order)
+	void perform_item_task(std::istream& is, Item_Task* pkt)
 	{
-		std::cout << "Picking order " << order.order_id << "\n";
-		std::cout << "Please input the last 6 character of item to confirm...\n";
-		std::cout << "item_id\t\t\t\t\tquantity\tconfirm\n";
-		auto idtail = std::make_unique<char[]>(7);
-		for (auto& g : order.goods)
+		// Print header and tips
+		switch (pkt->item_type)
 		{
-			auto& itemid = g.first;
-			std::cout << itemid << "\t" << g.second;
+		case Item_Type::InStock:
+			std::cout << "In-stock Task:\n";
+			break;
+		case Item_Type::ToBeShipped:
+			std::cout << "Picking order " << pkt->order_id << "\n";
+			break;
+		case Item_Type::Refunded:
+			std::cout << "Refunding order " << pkt->order_id << "\n";
+			break;
+		}		
+		std::cout << "Please input the last 6 character of item to confirm...\n";
+		std::cout << "item_id\t\t\t\t\tloc\tqty\tconfirm\n";
+
+		auto idtail = std::make_unique<char[]>(7);
+		for (auto& g : pkt->item_infos)
+		{
+			auto& itemid = g.item_id;
+			std::cout << itemid << "\t" 
+				<< g.location << "\t"
+				<< g.quantity;
 			if (is.eof()) return;
 			is.get(idtail.get(), 7);
 
@@ -21,16 +36,18 @@ namespace Tests
 			auto tail = itemid.substr(sz - 6);
 			if (std::string{ idtail.get() } == tail)
 			{
-				std::cout << "\t\tY\n";
+				std::cout << "\tY\n";
 				continue;
 			}
 			else
 			{
 				std::cout << "bad input!\n";
 			}
-		}
-		std::cout << "all picked and confirmed\n";
+		}//end of for
+
+		std::cout << "all confirmed\n";
 	}
+	
 	warehouse::Stock_Record perform_inv(const std::vector<int>& actuals, Inventory_Task* pit)
 	{
 		std::cout << "Doing inventory\n";
@@ -56,7 +73,7 @@ namespace Tests
 		w.item_mng = get_item_manager();
 		w.order_mng = get_order_manager();
 		w.personnel_mng = get_personnel_manager();	
-
+		test_instock(w);
 		test_pick(w);
 		test_inv(w);
 	}
@@ -74,7 +91,7 @@ namespace Tests
 		auto sv = std::vector<int>{};
 		for (auto& g : order.goods)
 		{
-			auto s = w.item_mng->find_item(g.first);
+			auto s = w.item_mng->get_item(g.first);
 			if (!s.first) {
 				std::cout << "find_item failed!";  return;
 			}
@@ -100,7 +117,7 @@ namespace Tests
 		}
 		std::stringbuf s(all_tails_str);
 		std::istream is(&s);
-		perform_picking(is, pkt, order);
+		perform_item_task(is, pkt);
 
 		// done
 		w.finish_task(pers_id, t);
@@ -123,7 +140,7 @@ namespace Tests
 		// 3 verify items
 		for (int i = 0; i != order.goods.size(); i++)
 		{
-			auto found = w.item_mng->find_item(order.goods[i].first);
+			auto found = w.item_mng->get_item(order.goods[i].first);
 			if (!found.first)
 			{
 				std::cout << "find_item() 2nd time failed\n";
@@ -217,6 +234,73 @@ namespace Tests
 			{ std::cout << "expected_stock failed!"; return; }
 			std::cout << "Y\n";
 		}
+	}
+	void test_instock(warehouse& w)
+	{
+		std::vector<Item> vni, vei;
+		// read file to get new items           
+		storage::read_item_table(".\\Data\\item_tab_2.csv", vni, Item_File_Type::NotLocated);
+		// query to get existing items
+		auto sz = w.item_mng->item_count();
+		vei.resize(sz);
+		w.item_mng->get_all_items(vei.begin(), sz);
+		// add them up
+		std::vector<Item> vi = vni;
+		vi.insert(vi.end(), vei.begin(), vei.end());
+
+		// Gen task
+		auto in = w.in_stock(vi);
+		if (!in.first) { std::cout << "in_stock failed\n"; return; }
+		auto pid = in.second;
+
+		// Fetch task
+		auto tq = w.fetch_task_queue(pid);
+		if (tq.empty()) { std::cout << "fetch_tq failed\n"; return; }
+		auto pt = w.fetch_task(pid, tq[0]);
+		auto pit = dynamic_cast<Item_Task*>(pt);
+
+		// Prep input
+		std::string all_tails_str;
+		for (auto& g : pit->item_infos)
+		{
+			auto& id = g.item_id;
+			all_tails_str += id.substr(id.size() - 6);
+		}
+		std::stringbuf s(all_tails_str);
+		std::istream is(&s);
+
+		// Perform task
+		perform_item_task(is, pit);
+		w.finish_task(pid, pt);
+
+		// Validate
+		for (auto& i : vi)
+		{
+			std::cout << i.item_id << ": ";
+			auto found = w.item_mng->get_item(i.item_id);
+			if (!found.first)
+			{
+				std::cout << "not found!";
+				return;
+			}			
+			if (std::find(vni.begin(), vni.end(), i) != vni.end())
+			{
+				if (found.second.item_id != i.item_id
+					|| found.second.stocks != i.stocks)
+				{
+					std::cout << "failed\n";
+				}
+			}
+			else
+			{
+				if (found.second.item_id != i.item_id
+					|| found.second.stocks != i.stocks * 2)
+				{
+					std::cout << "failed\n";
+				}
+			}
+			std::cout << "pass\n";
+		}// end of validation for
 	}
 	std::unique_ptr<item_manager> get_item_manager()
 	{

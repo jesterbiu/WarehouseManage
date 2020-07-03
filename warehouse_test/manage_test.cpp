@@ -42,7 +42,7 @@ namespace Tests
 #endif
 #if FIND_ITEM
                     // find_item
-                    auto found = mp.find_item(i.item_id);
+                    auto found = mp.get_item(i.item_id);
                     if (! (found.first && found.second == i))
                     {
                         std::cout << "failed to FIND " << i.item_id << "\n";
@@ -70,7 +70,7 @@ namespace Tests
                 {
                     auto updated_stocks = i.stocks + diff;
                     mp.update_stocks(i.item_id, updated_stocks);
-                    auto r = mp.find_item(i.item_id);
+                    auto r = mp.get_item(i.item_id);
                     if (! (r.first && r.second.stocks == updated_stocks))
                     {
                         std::cout << "failed to UPDATE " << i.item_id << "\n";
@@ -118,7 +118,7 @@ namespace Tests
                 }
 
                 // find_item
-                auto found = mp.find_item(i.item_id);
+                auto found = mp.get_item(i.item_id);
                 if (!found.first 
                     || i.item_id != found.second.item_id 
                     || i.stocks != found.second.stocks)

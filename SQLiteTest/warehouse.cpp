@@ -17,33 +17,90 @@ std::vector<const Task*> warehouse::fetch_task_queue(const std::string& pers_id)
 	 }
 	 return vpt;
 }
+void warehouse::init_finishers()
+{
+	auto itemio = [this](Task* pt) { finish_itemio_task(pt); };
+	auto inventory = [this](Task* pt) { finish_inventory_task(pt); };
+	task_finisher =
+	{
+		{
+			Task_Type::ItemIO_Type, 
+			std::function<void(Task*)>(itemio)
+		},
+		{
+			Task_Type::Inventory_Type,
+			std::function<void(Task*)>(inventory)
+		}
+	};	
+
+	auto instock = [this](Item_Task* it) { finish_instock_task(it); };
+	auto pick = [this](Item_Task* it) { finish_picking_task(it); };
+	auto refund = [this](Item_Task* it) { finish_refund_task(it); };
+	item_task_finisher =
+	{
+		{
+			Item_Type::InStock, 
+			std::function<void(Item_Task*)>(instock)
+		},
+		{
+			Item_Type::ToBeShipped,
+			std::function<void(Item_Task*)>(pick)
+		},
+		{
+			Item_Type::Refunded,
+			std::function<void(Item_Task*)>(refund)
+		}
+	};
+}
 void warehouse::finish_task(const std::string& pers_id, Task* pt)
 {	
+	/*
 	switch (pt->tell_task_type())
 	{
-	case Task_Type::Picking_Type:
-	{	
-		auto pick = dynamic_cast<Item_Task*>(pt);
-		finish_picking_task(pick);
+	case Task_Type::ItemIO_Type:
+	{			
+		//finish_itemio_task(pick);
 		break;
 	}
 	case Task_Type::Inventory_Type:
 	{	
 		auto invt = dynamic_cast<Inventory_Task*>(pt);
-		finish_inventory_task(invt);
+		//finish_inventory_task(invt);
 		break;
 	}
 	default:
 		break;
 	} // end of switch
-
+	*/
+	task_finisher[pt->tell_task_type()](pt);
 	// Delete task
 	personnel_mng->finish_task(pers_id, pt);
+}
+void warehouse::finish_itemio_task(Task* task)
+{
+	auto pit = dynamic_cast<Item_Task*>(task);
+	item_task_finisher[pit->item_type](pit);
 }
 void warehouse::finish_picking_task(Item_Task* task)
 {
 	auto& order_id = task->order_id;
 	order_mng->update_status(order_id, Order_Status_Type::Picked);
+}
+void warehouse::add_stocks(const std::vector<Item_Info>& infos) 
+{
+	for (auto& i : infos)
+	{
+		auto got = item_mng->get_item(i.item_id);
+		if (!got.first)
+		{
+			throw warehouse_exception
+			{
+				"finish_refund_task(): item not foound!"
+			};
+		}
+		auto updated_stocks = got.second.stocks + i.quantity;
+		item_mng->update_stocks(i.item_id, updated_stocks);
+	}
 }
 
 // pick() and its helper functions
@@ -54,7 +111,7 @@ std::pair<bool, std::string> warehouse::verify_ordered_goods(const Order& order)
 	{
 		// Fetch item info
 		auto& item_id = g.first;
-		auto result = item_mng->find_item(item_id);
+		auto result = item_mng->get_item(item_id);
 		if (!result.first)
 		{
 			std::string errmsg = "item " + item_id + " does not exist!";
@@ -93,7 +150,7 @@ std::vector<Item_Info> warehouse::get_good_info_list(const std::vector<good>& go
 		auto qty = g.second;
 
 		// Get item's location
-		auto rt = item_mng->find_item(item_id);
+		auto rt = item_mng->get_item(item_id);
 		// Throw if the item is not found 
 		// since verify_ordered_goods() just checked that
 		if (!rt.first)  

@@ -44,7 +44,7 @@ bool item_manager::add_item(const Item& pitem)
 	return false;
 }
 
-std::pair<bool, Item> item_manager::find_item(const std::string& id)
+std::pair<bool, Item> item_manager::get_item(const std::string& id)
 {
 	// Check existence
 	auto result = query_by_id(id);

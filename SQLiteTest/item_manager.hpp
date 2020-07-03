@@ -35,7 +35,7 @@ public:
 		}
 		return *this;
 	}
-
+	
 	// Add a unique item to the database. Return true if success
 	bool add_item(const Item& item);
 
@@ -47,7 +47,7 @@ public:
 	}
 
 	// Find and return the item if exists. Test pair.first to validate the return
-	std::pair<bool, Item> find_item(const std::string& id);
+	std::pair<bool, Item> get_item(const std::string& id);
 	
 	// Return the total count of items
 	int item_count();
@@ -154,7 +154,6 @@ private:
 		}
 	};
 	
-
 	// Bind data to write to (QUERY)
 	void extract_query(Item& d, sqlite3_stmt* stmthandle);
 
@@ -189,8 +188,8 @@ private:
 	{
 		locations_avail.at(loc) = Unavailable;
 	}
-
-	// Return an available location.
+	
+	// Return an available location but does not actually occupy it.
 	// The order of assignment of locations is unspecified.
 	Location arrange_location();
 };

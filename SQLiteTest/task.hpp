@@ -3,15 +3,18 @@
 #include <tuple>
 #include <string>
 #include "item.hpp"
+#include "personnel.hpp"
 #define TASK_ 1
 #if TASK_
 namespace WarehouseManage
 {
-	enum class Task_Type { Picking_Type, Inventory_Type, Refunding_Type };
+	enum class Task_Type { ItemIO_Type, Inventory_Type };
 
 	// Public interface for jobs
 	struct Task
 	{
+		// Return what type of personnel role this task can be assgined to
+		virtual Personnel_Role tell_role_type() = 0;
 		virtual Task_Type tell_task_type() = 0;
 		virtual ~Task() {}
 	};
@@ -55,29 +58,29 @@ namespace WarehouseManage
 		}
 
 	};	
-	enum class Item_Type { ToBeShipped, NewArrival, Refunded };
+	enum class Item_Type { ToBeShipped, InStock, Refunded };
 	struct Item_Task : public Task
 	{
 		// Fields
 		std::string order_id;
-		std::vector<Item_Info> picking_infos;
+		std::vector<Item_Info> item_infos;
 		Item_Type item_type;
 
 		// Ctor and dtor
 		template<typename Container>
 		Item_Task(const std::string& oid, const Container& infos, Item_Type itype) :
 			order_id(oid),
-			picking_infos(infos.begin(), infos.end()),
+			item_infos(infos.begin(), infos.end()),
 			item_type(itype)
 		{}
 		Item_Task(const Item_Task& oth) :
 			order_id(oth.order_id),
-			picking_infos(oth.picking_infos),
+			item_infos(oth.item_infos),
 			item_type(oth.item_type)
 		{}
 		Item_Task(Item_Task&& oth) noexcept:
 			order_id(std::move(oth.order_id)),
-			picking_infos(std::move(oth.picking_infos)),
+			item_infos(std::move(oth.item_infos)),
 			item_type(oth.item_type)
 		{}
 		Item_Task& operator =(const Item_Task& rhs)
@@ -85,7 +88,7 @@ namespace WarehouseManage
 			if (this != &rhs)
 			{
 				order_id = rhs.order_id;
-				picking_infos = rhs.picking_infos;
+				item_infos = rhs.item_infos;
 				item_type = rhs.item_type;
 			}
 			return *this;
@@ -93,22 +96,27 @@ namespace WarehouseManage
 		Item_Task& operator =(Item_Task&& rhs) noexcept
 		{
 			order_id = std::move(rhs.order_id);
-			picking_infos = std::move(rhs.picking_infos);
+			item_infos = std::move(rhs.item_infos);
 			item_type = rhs.item_type;
 			return *this;
 		}
 		~Item_Task() {}
 		
+		// Overriden base functions
 		Task_Type tell_task_type() override
 		{
-			return Task_Type::Picking_Type; 
+			return Task_Type::ItemIO_Type; 
+		}
+		inline Personnel_Role tell_role_type() override
+		{
+			return Personnel_Role::Picker;
 		}
 
 		// Operator ==
 		bool operator ==(const Item_Task& oth) const
 		{
 			return order_id == oth.order_id
-				&& picking_infos == oth.picking_infos;
+				&& item_infos == oth.item_infos;
 		}
 	};
 
@@ -185,9 +193,14 @@ namespace WarehouseManage
 		}
 		~Inventory_Task() {}
 		
+		// Overriden base functions
 		Task_Type tell_task_type() 
 		{ 
 			return Task_Type::Inventory_Type; 
+		}
+		inline Personnel_Role tell_role_type() override
+		{
+			return Personnel_Role::Picker;
 		}
 
 		// Operator ==
