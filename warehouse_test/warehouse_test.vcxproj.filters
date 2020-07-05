@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="manage_test.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="order_test.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -27,12 +24,12 @@
     <ClInclude Include="warehouse_test.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="item_test.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="order_test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="manage_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
@@ -42,6 +39,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="warehouse_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="item_test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

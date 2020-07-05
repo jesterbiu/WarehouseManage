@@ -52,7 +52,7 @@ namespace WarehouseManage
 		{
 			return tasker->next_avail_personnel();
 		}
-		// Assign a job automatically using job_dispatch()
+		// Assign a job automatically using task_dispatcher
 		inline std::pair<bool, std::string> assign(std::unique_ptr<Task>&& upt) 
 		{
 			return tasker->assign(std::move(upt));

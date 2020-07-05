@@ -54,24 +54,6 @@ void warehouse::init_finishers()
 }
 void warehouse::finish_task(const std::string& pers_id, Task* pt)
 {	
-	/*
-	switch (pt->tell_task_type())
-	{
-	case Task_Type::ItemIO_Type:
-	{			
-		//finish_itemio_task(pick);
-		break;
-	}
-	case Task_Type::Inventory_Type:
-	{	
-		auto invt = dynamic_cast<Inventory_Task*>(pt);
-		//finish_inventory_task(invt);
-		break;
-	}
-	default:
-		break;
-	} // end of switch
-	*/
 	task_finisher[pt->tell_task_type()](pt);
 	// Delete task
 	personnel_mng->finish_task(pers_id, pt);

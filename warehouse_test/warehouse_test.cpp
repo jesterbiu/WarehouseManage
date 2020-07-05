@@ -45,7 +45,7 @@ namespace Tests
 			}
 		}//end of for
 	}	
-	warehouse::Stock_Record perform_inv(const std::vector<int>& actuals, Inventory_Task* pit)
+	void perform_inv(const std::vector<int>& actuals, Inventory_Task* pit)
 	{
 		std::cout << "\nDoing inventory\n";
 		std::cout << "Please input actual stock count of each item.\n";
@@ -61,7 +61,7 @@ namespace Tests
 				<< (ibeg->actual_stock_count = *abeg) << "\n";
 			abeg++; ibeg++;			
 		}
-		return warehouse::Stock_Record{ *pit };
+		std::cout << "end of perform_inv()\n";
 	}
 	
 	void test_warehouse()
@@ -76,9 +76,10 @@ namespace Tests
 		test_instock(w);
 		test_pick(w);
 		test_refund(w);
-		test_inv(w);
+		//test_inv(w);
 	}
 	
+	// 对添加到数据库中第一个订单拣货
 	void test_pick(warehouse& w)
 	{
 		// get an order
@@ -159,7 +160,8 @@ namespace Tests
 
 		std::cout << "test_pick: succeed\n";
 	}
-	void test_inv(warehouse& w)
+	// 盘点A1~12, B1~12；其中货架号整除3的，实际库存+1；货架号不整除3但整除4的，实际库存-1；其他不变
+	void test_inv(warehouse& w) 
 	{
 		// select loc
 		std::vector<Location> locs{};
@@ -202,12 +204,14 @@ namespace Tests
 			}
 		}
 				
-		// perform_inv
-		
-		auto sr = std::move(perform_inv(actual_stocks, pitask));
+		// perform_inv		
+		perform_inv(actual_stocks, pitask);
 		w.finish_task(pers_id, pt);
 
-		// check 
+		// check record
+		auto srs = w.get_stock_records();
+		if (srs.empty()) { throw warehouse_exception{"stock_record failed!"}; }
+		auto sr = std::move(srs[0]);
 		auto m = sr.get_differences();		
 		auto info_to_stock = [&actual_stocks, sr](const Inventory_Info& info) 
 		{
@@ -238,6 +242,7 @@ namespace Tests
 		}
 		std::cout << "test_inv(): succeed\n";
 	}
+	//每种商品进货当前存量的一倍
 	void test_instock(warehouse& w)
 	{
 		std::vector<Item> vni, vei;
@@ -253,7 +258,7 @@ namespace Tests
 
 		// Gen task
 		auto in = w.in_stock(vi);
-		if (!in.first) { std::cout << "in_stock failed\n"; return; }
+		if (!in.first) { std::cout << "in_stock failed: " << in.second << "\n"; return; }
 		auto pid = in.second;
 
 		// Fetch task
@@ -306,6 +311,7 @@ namespace Tests
 		}// end of validation for
 		std::cout << "test_instock: succeed\n";
 	}
+	// 把test_pick()中完成拣货的订单全部退货
 	void test_refund(warehouse& w)
 	{
 		// get a picked order

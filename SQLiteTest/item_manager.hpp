@@ -67,11 +67,8 @@ public:
 		auto stmth = item_statement_generator::select_all_stmt(get_database());
 		database::verify_stmt_handle(stmth);
 
-		// Execute
-		database::step(*stmth);
-
 		// Extract
-		auto rc = SQLITE_DONE;
+		auto rc = database::step(*stmth);
 		auto i = 0;
 		while (database::step_has_result(rc) && i != max_count)
 		{			
@@ -81,7 +78,7 @@ public:
 			*iter = item;
 
 			// Try to fetch the next row
-			auto rc =database::step(*stmth);
+			rc =database::step(*stmth);
 
 			// Increment
 			iter++;

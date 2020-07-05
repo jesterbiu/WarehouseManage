@@ -5,8 +5,6 @@ using namespace WarehouseManage;
 
 namespace Tests 
 {
-	
-
 	void order_test()
 	{
 		try
@@ -69,6 +67,7 @@ namespace Tests
 		{
 			std::cout << we;
 		}
+		std::cout << "order_test(): succeed\n\n";
 	}
 	void refund_order_test(std::map<std::string, Order>& mo, WarehouseManage::order_manager& om)
 	{
@@ -110,6 +109,8 @@ namespace Tests
 			else
 			{ return; }
 		} // end of for
+
+		std::cout << "refund_order_test(): succeed\n\n";
 	}
 	bool operator==(const std::vector<good>& lhs, const std::vector<good>& rhs)
 	{

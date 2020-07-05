@@ -1,4 +1,4 @@
-#include "manage_test.hpp"
+#include "item_test.hpp"
 using namespace WarehouseManage;
 // Debug options
 #define ADD_ITEM        1
@@ -93,6 +93,7 @@ namespace Tests
             {
                 std::cout << expt.what();                
             }
+            std::cout << "item_manager_test() succeed\n\n";
 		}
 
         void item_manager_test_pt2(item_manager& mp)
@@ -140,6 +141,7 @@ namespace Tests
                 ++iter;
                 std::cout << "item " << iter << " "
                     << i.item_id << "\n";
-            }
+            } // end of for
+            std::cout << "item_manager_test_pt2() succeed\n\n";
         }
 }

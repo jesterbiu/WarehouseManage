@@ -40,5 +40,7 @@ namespace Tests
 		{
 			std::cout << we.what() << std::endl;
 		}
+
+		std::cout << "pers_test(): succeed\n\n";
 	}
 }

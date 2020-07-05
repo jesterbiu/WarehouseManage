@@ -28,42 +28,6 @@ namespace WarehouseManage
 
 		static void read_pers_table(const std::string& filename, std::vector<Personnel>& vp);
 
-		template<typename ValType, typename FileType>
-		static void read_table(const std::string& filename, std::vector<Item>& vi, FileType filetype)
-		{
-			// Open file stream
-			std::ifstream fs(filename);
-			if (!fs.is_open())
-			{
-				throw warehouse_exception("read_location_item_table: failed to open file!");
-				return;
-			}
-
-			// Dispose the first line which is a comment
-			//auto line = std::string();
-			if (!fs.eof())
-			{
-				std::string s;
-				std::getline(fs, s);
-			}
-
-			// Read file
-			std::string line;
-			while (!fs.eof())
-			{
-				std::getline(fs, line);
-				auto vs = split(line, ',');		// Seperated columns by comma
-				auto val = extract_val<ValType, FileType>(vs, filetype);
-
-				if (val)
-				{
-					vi.push_back(val);
-				}
-			}
-
-			// Close stream
-			fs.close();
-		}
 
 	private:
 		static Item extract_located_item(const std::vector<std::string>& vi)
@@ -121,36 +85,5 @@ namespace WarehouseManage
 				return std::make_pair(false, good{ "", -1 });
 			}
 		}
-
-		// Extract template
-		template<typename ValType, typename FileType>
-		static ValType extract_val(const std::vector<std::string>& vi, FileType filetype)
-		{
-			return ValType();
-		}
-
-		// Extract template specialization for Item
-		template<>
-		static Item extract_val<Item, Item_File_Type>
-			(const std::vector<std::string>& vi, Item_File_Type filetype)
-		{
-			Item item;
-
-			// Extract based on filetype
-			switch (filetype)
-			{
-			case Item_File_Type::Located:
-				item = extract_located_item(vi);
-				break;
-			case Item_File_Type::NotLocated:
-				item = extract_notlocated_item(vi);
-				break;
-			default:
-				break;
-			}
-
-			return item;
-		}
-
 	};
 }

@@ -42,9 +42,6 @@
     <ClCompile Include="manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ui.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="item.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -84,9 +81,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="task.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ui.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

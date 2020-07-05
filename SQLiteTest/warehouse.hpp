@@ -44,7 +44,10 @@ namespace WarehouseManage
 			// Initialize task-finishers
 			init_finishers();
 		}
-		
+		~warehouse() {}
+		warehouse(const warehouse&) = delete;
+		warehouse& operator =(const warehouse&) = delete;
+
 	public:	// MEDIATOR FUNCTIONS FOR HIGH LEVEL TASKS
 		// Send the personnel's task queue to UI
 		std::vector<const Task*> fetch_task_queue(const std::string& pers_id);

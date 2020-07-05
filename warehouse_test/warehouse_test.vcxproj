@@ -139,14 +139,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="manage_test.hpp" />
+    <ClInclude Include="item_test.hpp" />
     <ClInclude Include="order_test.hpp" />
     <ClInclude Include="pers_test.hpp" />
     <ClInclude Include="warehouse_test.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="manage_test.cpp" />
+    <ClCompile Include="item_test.cpp" />
     <ClCompile Include="order_test.cpp" />
     <ClCompile Include="pers_test.cpp" />
     <ClCompile Include="warehouse_test.cpp" />
