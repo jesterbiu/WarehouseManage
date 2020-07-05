@@ -68,10 +68,10 @@ public:
 		database::verify_stmt_handle(stmth);
 
 		// Execute
-		auto rc = database::step(*stmth);
-		database::verify_steping(rc);
+		database::step(*stmth);
 
-		// Extract	
+		// Extract
+		auto rc = SQLITE_DONE;
 		auto i = 0;
 		while (database::step_has_result(rc) && i != max_count)
 		{			
@@ -82,7 +82,6 @@ public:
 
 			// Try to fetch the next row
 			auto rc =database::step(*stmth);
-			database::verify_steping(rc);
 
 			// Increment
 			iter++;
@@ -184,6 +183,7 @@ private:
 		return locations_avail.at(loc);
 	}
 	
+	// Try to occupy the Location. Call is_available first!
 	inline void occupy_location(const Location& loc)
 	{
 		locations_avail.at(loc) = Unavailable;

@@ -10,13 +10,13 @@ namespace Tests
 		switch (pkt->item_type)
 		{
 		case Item_Type::InStock:
-			std::cout << "In-stock Task:\n";
+			std::cout << "\nIn-stock Task:\n";
 			break;
 		case Item_Type::ToBeShipped:
-			std::cout << "Picking order " << pkt->order_id << "\n";
+			std::cout << "\nPicking order " << pkt->order_id << "\n";
 			break;
 		case Item_Type::Refunded:
-			std::cout << "Refunding order " << pkt->order_id << "\n";
+			std::cout << "\nRefunding order " << pkt->order_id << "\n";
 			break;
 		}		
 		std::cout << "Please input the last 6 character of item to confirm...\n";
@@ -44,13 +44,10 @@ namespace Tests
 				std::cout << "bad input!\n";
 			}
 		}//end of for
-
-		std::cout << "all confirmed\n";
-	}
-	
+	}	
 	warehouse::Stock_Record perform_inv(const std::vector<int>& actuals, Inventory_Task* pit)
 	{
-		std::cout << "Doing inventory\n";
+		std::cout << "\nDoing inventory\n";
 		std::cout << "Please input actual stock count of each item.\n";
 		std::cout << "item_id\t\t\t\t\tloc\texpected\tactual\n";
 		auto& invinfos = pit->inventory_infos;
@@ -66,24 +63,29 @@ namespace Tests
 		}
 		return warehouse::Stock_Record{ *pit };
 	}
+	
 	void test_warehouse()
 	{
 		// initialize
 		auto w = warehouse{};
-		w.item_mng = get_item_manager();
-		w.order_mng = get_order_manager();
-		w.personnel_mng = get_personnel_manager();	
+		add_items(w);
+		add_orders(w);
+		add_personnels(w);	
+
+		// tests
 		test_instock(w);
 		test_pick(w);
+		test_refund(w);
 		test_inv(w);
 	}
+	
 	void test_pick(warehouse& w)
 	{
 		// get an order
-		auto sz = w.order_mng->order_count();
+		auto sz = w.order_count();
 		auto ov = std::vector<std::string>{ (size_t)sz };
-		w.order_mng->get_all_order_ids(ov.begin(), sz);// get order ids
-		auto got = w.order_mng->get_order(ov[0]);// get the first order
+		w.get_all_order_ids(ov.begin(), sz);// get order ids
+		auto got = w.get_order(ov[0]);// get the first order
 		if (!got.first) return;
 		auto& order = got.second;
 
@@ -91,7 +93,7 @@ namespace Tests
 		auto sv = std::vector<int>{};
 		for (auto& g : order.goods)
 		{
-			auto s = w.item_mng->get_item(g.first);
+			auto s = w.get_item(g.first);
 			if (!s.first) {
 				std::cout << "find_item failed!";  return;
 			}
@@ -131,7 +133,7 @@ namespace Tests
 			return;
 		}
 		// 2 verify order status
-		auto update_o = w.order_mng->check_status(order.order_id);
+		auto update_o = w.check_order_status(order.order_id);
 		if (!update_o.first || update_o.second != Order_Status_Type::Picked)
 		{
 			std::cout << "order status update failed!\n";
@@ -140,7 +142,7 @@ namespace Tests
 		// 3 verify items
 		for (int i = 0; i != order.goods.size(); i++)
 		{
-			auto found = w.item_mng->get_item(order.goods[i].first);
+			auto found = w.get_item(order.goods[i].first);
 			if (!found.first)
 			{
 				std::cout << "find_item() 2nd time failed\n";
@@ -155,7 +157,7 @@ namespace Tests
 
 		}
 
-		std::cout << "succeed\n";
+		std::cout << "test_pick: succeed\n";
 	}
 	void test_inv(warehouse& w)
 	{
@@ -184,7 +186,7 @@ namespace Tests
 		for (auto& i : pitask->inventory_infos)
 		{
 			auto l = i.location;
-			auto found = w.item_mng->check_location(l);
+			auto found = w.check_item_location(l);
 			if (!found.first) { continue; }
 			if (0 == l.slot % 3)
 			{
@@ -234,6 +236,7 @@ namespace Tests
 			{ std::cout << "expected_stock failed!"; return; }
 			std::cout << "Y\n";
 		}
+		std::cout << "test_inv(): succeed\n";
 	}
 	void test_instock(warehouse& w)
 	{
@@ -241,9 +244,9 @@ namespace Tests
 		// read file to get new items           
 		storage::read_item_table(".\\Data\\item_tab_2.csv", vni, Item_File_Type::NotLocated);
 		// query to get existing items
-		auto sz = w.item_mng->item_count();
+		auto sz = w.item_count();
 		vei.resize(sz);
-		w.item_mng->get_all_items(vei.begin(), sz);
+		w.get_all_items(vei.begin(), sz);
 		// add them up
 		std::vector<Item> vi = vni;
 		vi.insert(vi.end(), vei.begin(), vei.end());
@@ -277,7 +280,7 @@ namespace Tests
 		for (auto& i : vi)
 		{
 			std::cout << i.item_id << ": ";
-			auto found = w.item_mng->get_item(i.item_id);
+			auto found = w.get_item(i.item_id);
 			if (!found.first)
 			{
 				std::cout << "not found!";
@@ -301,40 +304,117 @@ namespace Tests
 			}
 			std::cout << "pass\n";
 		}// end of validation for
+		std::cout << "test_instock: succeed\n";
 	}
-	std::unique_ptr<item_manager> get_item_manager()
+	void test_refund(warehouse& w)
+	{
+		// get a picked order
+		std::vector<std::string> pickedorders;
+		w.get_order_ids_by_status(pickedorders, Order_Status_Type::Picked);
+		if (pickedorders.empty())
+		{
+			throw warehouse_exception{
+				"get_order() failed"
+			};
+		}
+		auto o = pickedorders[0];
+		auto got = w.get_order(o);
+		if (!got.first)
+		{
+			throw warehouse_exception{ "get_order()" };
+		}
+		auto order = got.second;
+
+		// generate Refund order
+		Refund_Order ro{ order.order_id, order.goods };
+
+		// record item stocks for further validation
+		std::vector<int> prev_qtys;
+		for (auto& g : order.goods)
+		{
+			auto fi = w.get_item(g.first);
+			if (!fi.first) { throw warehouse_exception{ "get_item() failed" }; }
+			prev_qtys.push_back(fi.second.stocks);
+		}
+
+		// Gen task
+		auto re = w.refund(ro);
+		if (!re.first) { std::cout << "refund() failed\n"; return; }
+		auto pid = re.second;
+
+		// Fetch task
+		auto tq = w.fetch_task_queue(pid);
+		if (tq.empty()) { std::cout << "fetch_tq failed\n"; return; }
+		auto pt = w.fetch_task(pid, tq[0]);
+		auto pit = dynamic_cast<Item_Task*>(pt);
+
+		// Prep input
+		std::string all_tails_str;
+		for (auto& g : pit->item_infos)
+		{
+			auto& id = g.item_id;
+			all_tails_str += id.substr(id.size() - 6);
+		}
+		std::stringbuf s(all_tails_str);
+		std::istream is(&s);
+
+		// Perform task
+		perform_item_task(is, pit);
+		w.finish_task(pid, pt);
+
+		// validate
+		// order status
+		auto cs = w.check_order_status(order.order_id);
+		if (!cs.first || cs.second != Order_Status_Type::Refunded) {
+			throw warehouse_exception{ "check_order_status(): failed" };
+		}
+		std::cout << "order status validated\n";
+
+		// item stocks
+		for (int i = 0; i != order.goods.size(); i++)
+		{
+			auto fi = w.get_item(order.goods[i].first);
+			if (!fi.first) { throw warehouse_exception{ "get_item() failed" }; }
+			auto curr_qty = fi.second.stocks;
+			auto refunded_qty = order.goods[i].second;
+			if (curr_qty != refunded_qty + prev_qtys[i])
+			{
+				std::cout << "stocks failed";
+				return;
+			}
+		}
+		std::cout << "item stocks validated\n";
+		std::cout << "test_refund(): succeed\n";
+	}
+
+	void add_items(warehouse& w)
 	{
 		std::vector<Item> vi;
 		// read file                
 		storage::read_item_table(".\\Data\\item_tab_1.csv", vi, Item_File_Type::Located);
 
-		// initialize a item_manager instance
-		auto db = database::get_instance();
-		auto mp = std::make_unique<item_manager>(db);
-
 		// insert items to database 
 		int iter = 0;
+		std::cout << "\nADDING ITEMS...\n";
 		for (auto& i : vi)
 		{
+			std::cout << "item " << i.item_id << ": ";
 			// add_item
-			if (!mp->add_item(i))
+			if (!w.add_item(i))
 			{
-				std::cout << "failed to ADD " << i.item_id << "\n";
+				throw warehouse_exception{"add_items()"};
 			}
+			std::cout << "ADDED\n";
 		}
-
-		return mp;
+		std::cout << "success\n";
 	}
-	std::unique_ptr<order_manager> get_order_manager()
+	void add_orders(warehouse& w)
 	{
 		// read
 		std::map<std::string, Order> mo;
 		storage::read_order_table(".\\Data\\order_tab_1.csv", mo);
-
-		// prepare order_manager
-		auto db = database::get_instance();
-		auto om = std::make_unique<order_manager>(db);
-
+		
+		std::cout << "\nADDING ORDERS...\n";
 		for (auto& i : mo)
 		{
 			std::cout
@@ -343,35 +423,31 @@ namespace Tests
 				<< ": ";
 
 			// add
-			if (om->add_order(i.second))
+			if (!w.add_order(i.second))
 			{
-				std::cout << "ADDED\n";
+				throw warehouse_exception{ "add_orders()" };
 			}
-			else return nullptr;
+			std::cout << "ADDED\n";
 		}
-
-		return om;
+		std::cout << "success\n";
 	}
-	std::unique_ptr<personnel_manager> get_personnel_manager()
+	void add_personnels(warehouse& w)
 	{
 		auto vp = std::vector<Personnel>{};
-
 		storage::read_pers_table(".\\Data\\pers_tab_1.csv", vp);
-		auto pdb = database::get_instance();
-		auto pm = std::make_unique<personnel_manager>(pdb);
-
+		
+		std::cout << "\nADDING PERSONNELS...\n";
 		for (auto& p : vp)
 		{
 			std::cout << p.personnel_id << ": ";
-
-			if (pm->add_personnel(p))
+			if (!w.add_personnel(p))
 			{
-				std::cout << "ADDED\n";
+				throw warehouse_exception{ "add_pers()" };
 			}
-			else return nullptr;
+			std::cout << "ADDED\n";
+			
 		}
-
-		return pm;
+		std::cout << "success\n";
 	}
 }
 

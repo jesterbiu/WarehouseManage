@@ -4,9 +4,10 @@
 namespace Tests
 {
 	using namespace WarehouseManage;
-	std::unique_ptr<item_manager> get_item_manager();
-	std::unique_ptr<order_manager> get_order_manager();
-	std::unique_ptr<personnel_manager> get_personnel_manager();
+	void add_items(warehouse& w);
+	void add_orders(warehouse& w);
+	void add_personnels(warehouse& w);
+
 	void test_warehouse();
 	void test_instock(warehouse& w);
 	void test_pick(warehouse& w);

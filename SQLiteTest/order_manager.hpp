@@ -63,7 +63,6 @@ namespace WarehouseManage
 
 			// Execute
 			auto rc = database::step(*stmth);
-			database::verify_steping(rc);
 
 			// Extract	
 			auto i = 0;
@@ -73,8 +72,7 @@ namespace WarehouseManage
 				*iter = database::extract_text(*stmth, 0);
 
 				// Try to fetch the next row
-				auto rc = database::step(*stmth);
-				database::verify_steping(rc);
+				database::step(*stmth);
 
 				// Increment
 				iter++;
@@ -82,28 +80,33 @@ namespace WarehouseManage
 			}
 		}
 		
-		// Fetch all orders of the given status using container.pushback()
+		// Fetch all orders of the given status using container.insert()
 		template<typename Container>
 		void get_order_ids_by_status(Container& c, Order_Status_Type status)
 		{
+			// Type constraint
+			static_assert(std::is_same<Container::value_type, std::string>::value,
+				"Container must store strings!");
+
 			// Prepare SQL
 			auto stmth = order_statement_generator::query_orders_by_status_stmt(get_database());
 			database::verify_stmt_handle(stmth);
 
+			// Bind
+			database::bind_int(*stmth, 1, status_to_int(status));
+
 			// Execute
 			auto rc = database::step(*stmth);
-			database::verify_steping(rc);
 
 			// Extract	
 			while (database::step_has_result(rc))
 			{
 				// Extract order id				
 				auto id = database::extract_text(*stmth, 0);
-				c.pushback(id);
+				c.insert(c.end(), id);
 
 				// Try to fetch the next row
-				auto rc = database::step(*stmth);
-				database::verify_steping(rc);
+				rc = database::step(*stmth);
 			}
 		}
 

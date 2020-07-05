@@ -75,12 +75,10 @@ std::pair<bool, Item> item_manager::check_location(const Location& location)
 
 	// Bind SQL params:
 	// Bind shelf:
-	auto rc1 = database::bind_int(*stmthandle, 1, location.shelf);
-	database::verify_binding(rc1);
+	database::bind_int(*stmthandle, 1, location.shelf);
 
 	// Bind slot:
-	auto rc2 = database::bind_int(*stmthandle, 2, location.slot);
-	database::verify_binding(rc2);
+	database::bind_int(*stmthandle, 2, location.slot);
 
 	// Execute sql
 	auto rc = database::step(*stmthandle);
@@ -116,18 +114,14 @@ void item_manager::extract_query(Item& d, sqlite3_stmt* stmthandle)
 void item_manager::bind_insert(const Item& d, sqlite3_stmt* stmthandle)
 {
 	// Bind location
-	auto rc1 = database::bind_int(stmthandle, 1, d.location.shelf);
-	database::verify_binding(rc1);
-	auto rc2 = database::bind_int(stmthandle, 2, d.location.slot);
-	database::verify_binding(rc2);
+	database::bind_int(stmthandle, 1, d.location.shelf);
+	database::bind_int(stmthandle, 2, d.location.slot);
 
 	// Bind id
-	auto rc3 = database::bind_text(stmthandle, 3, d.item_id);
-	database::verify_binding(rc3);
+	database::bind_text(stmthandle, 3, d.item_id);
 
 	// Bind stocks
-	auto rc4 = database::bind_int(stmthandle, 4, d.stocks);
-	database::verify_binding(rc4);	
+	database::bind_int(stmthandle, 4, d.stocks);
 }
 
 std::pair<bool, statement_handle> item_manager::query_by_id(const std::string& id)
@@ -137,11 +131,10 @@ std::pair<bool, statement_handle> item_manager::query_by_id(const std::string& i
 	database::verify_stmt_handle(stmthandle);
 
 	// Bind sql parameter to input value
-	auto rc = database::bind_text(*stmthandle, 1, id);
-	database::verify_binding(rc);
+	database::bind_text(*stmthandle, 1, id);
 
 	// Execute sql
-	rc = database::step(*stmthandle);
+	auto rc = database::step(*stmthandle);
 	if (database::step_has_result(rc))
 	{
 		return std::make_pair(true, std::move(stmthandle));
@@ -160,15 +153,13 @@ bool item_manager::update_stocks(const std::string& id, int updated_stocks)
 
 	// Bind SQL params:
 	// Bind updated stocks
-	auto rc1 = database::bind_int(*stmthandle, 1, updated_stocks); 
-	database::verify_binding(rc1);
+	database::bind_int(*stmthandle, 1, updated_stocks); 
 
 	// Bind item_id
-	auto rc2 = database::bind_text(*stmthandle, 2, id);
-	database::verify_binding(rc2);
+	database::bind_text(*stmthandle, 2, id);
 
 	// Execute sql
-	auto rc = database::step(*stmthandle);
+	database::step(*stmthandle);
 	return true;
 }
 
@@ -270,7 +261,6 @@ int item_manager::item_count()
 
 	// Execute SQL
 	auto rc = database::step(*stmthandle);
-	database::verify_steping(rc);
 	if (!database::step_has_result(rc))
 	{
 		throw warehouse_exception

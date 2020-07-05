@@ -85,7 +85,9 @@ namespace WarehouseManage
 		};
 		class task_dispatcher
 		{			
+			// <Personnel - task queue>
 			PersID_Task_Map tasks;
+			// Holds proceeding tasks for manager to inspect progress
 			std::unordered_map<Task*, Task_Queue::iterator> proceeding_tasks;
 			
 		public:
@@ -123,8 +125,11 @@ namespace WarehouseManage
 				return next_pers;
 
 			}
+			// Assign a task automatically
 			std::pair<bool, std::string> assign(std::unique_ptr<Task>&&);
+			// Assign a task to a designated personnel
 			bool assign(std::unique_ptr<Task>&&, const std::string&);
+			// Fetch and return the task queue given personnel id
 			inline Task_Queue* fetch_task_queue(const std::string& pers_id)
 			{
 				if (tasks.find(pers_id) == tasks.end())
@@ -136,7 +141,9 @@ namespace WarehouseManage
 					return &tasks[pers_id];
 				}				
 			}
+			// Activate a task to perform
 			Task* fetch_task(const std::string& pers_id, const Task* pt);
+			// Finish and delete a task from its task queue
 			void finish_task(const std::string& pers_id, Task* pt);
 		};
 		std::shared_ptr<task_dispatcher> tasker;

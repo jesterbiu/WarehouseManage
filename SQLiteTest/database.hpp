@@ -147,7 +147,12 @@ namespace WarehouseManage {
 					"statement_handle initialization failed!"
 				};
 			}
+		}		
+		inline static bool step_has_result(int step_rc)
+		{
+			return step_rc == SQLITE_ROW;
 		}
+	private:
 		inline static void verify_binding(int bind_rc)
 		{
 			if (SQLITE_OK != bind_rc)
@@ -174,10 +179,6 @@ namespace WarehouseManage {
 					throw warehouse_exception("step: OTH", step_rc);
 				}
 			}
-		}
-		inline static bool step_has_result(int step_rc)
-		{
-			return step_rc == SQLITE_ROW;
 		}
 	
 	private:

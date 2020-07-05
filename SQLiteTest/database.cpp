@@ -1,41 +1,18 @@
 #include "database.hpp"
+// Use temperary database if 1 
+#define MEMORY_DB 1
 
 using namespace WarehouseManage;
-
-// The 2nd argument to the sqlite3_exec() callback function is the number of columns in the result.
-// The 3rd argument to the sqlite3_exec() callback is an array of pointers to strings obtained 
-//		as if from sqlite3_column_text(), one for each column.
-//		If an element of a result row is NULL then the corresponding string pointer for the sqlite3_exec() callback is a NULL pointer.
-//The 4th argument to the sqlite3_exec() callback is an array of pointers to strings 
-//		where each entry represents the name of corresponding result column 
-//		as obtained from sqlite3_column_name().
-int create_table_callback(void* outside, int row_count, char** col_vals, char** col_names)
-{
-	std::cout << "create table"
-		<< "\nrow count: " << row_count << std::endl;
-	if ((col_names) && (*col_names))
-	{
-		std::cout << col_names[0] << "\n";
-	}
-	else
-	{
-		std::cout << "ERROR: failed to extract column name(s)\n";
-	}
-	if ((col_vals) && (*col_vals))
-	{
-		std::cout << col_vals[0] << "\n";
-	}
-	else
-	{
-		std::cout << "ERROR: failed to extract column value(s)\n";
-	}
-	return 0;
-}
 
 database::database()
 {
 	// Open database instance
+#if MEMORY_DB
 	auto rc = sqlite3_open(":memory:", &db);
+#endif
+#if !MEMORY_DB
+	auto rc = sqlite3_open(".\\data\\warehouse.db", &db);
+#endif
 	if (SQLITE_OK != rc)
 	{
 		std::cout << sqlite3_errmsg(db);
@@ -70,16 +47,16 @@ void database::create_table(const char* sqlstmt)
 void database::create_item_table()
 {
 	static const char sqlstmt[] =
-		"CREATE TABLE items (shelf INTEGER, slot INTEGER, id TEXT PRIMARY KEY, stocks INTEGER)";
+		"CREATE TABLE IF NOT EXISTS items (shelf INTEGER, slot INTEGER, id TEXT PRIMARY KEY, stocks INTEGER)";
 	create_table(sqlstmt);
 }
 
 void database::create_order_table()
 {
 	static const char sqlstmt_orders[] =
-		"CREATE TABLE orders (order_id TEXT PRIMARY KEY, status INTEGER)";
+		"CREATE TABLE IF NOT EXISTS orders (order_id TEXT PRIMARY KEY, status INTEGER)";
 	static const char sqlstmt_order_details[] =
-		"CREATE TABLE order_details (order_id TEXT, item_id TEXT, quantity INTEGER)";
+		"CREATE TABLE IF NOT EXISTS order_details (order_id TEXT, item_id TEXT, quantity INTEGER)";
 	create_table(sqlstmt_orders);
 	create_table(sqlstmt_order_details);
 }
@@ -87,13 +64,13 @@ void database::create_order_table()
 void database::create_refund_order_table()
 {
 	static const char sqlstmt_refund_orders[] =
-		"CREATE TABLE refund_orders (order_id TEXT, item_id TEXT, refund_quantity INTEGER)";
+		"CREATE TABLE IF NOT EXISTS refund_orders (order_id TEXT, item_id TEXT, refund_quantity INTEGER)";
 	create_table(sqlstmt_refund_orders);
 }
 
 void database::create_personnel_table()
 {
 	static const char sqlstmt_personnels[] =
-		"CREATE TABLE personnels (role INTEGER, pers_id TEXT PRIMARY KEY, password TEXT)";
+		"CREATE TABLE IF NOT EXISTS personnels (role INTEGER, pers_id TEXT PRIMARY KEY, password TEXT)";
 	create_table(sqlstmt_personnels);
 }
