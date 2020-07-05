@@ -67,7 +67,7 @@ namespace Tests
 	void test_warehouse()
 	{
 		// initialize
-		auto w = warehouse{};
+		warehouse w;
 		add_items(w);
 		add_orders(w);
 		add_personnels(w);	
